@@ -1,24 +1,3 @@
----
-schemaVersion: 1
-entityType: "docman.document-mirror"
-readOnly: true
-source: "docman"
-projectId: "b4e7db65-7956-4c92-8cc1-0f16ef908d41"
-projectName: "aops"
-projectSlug: "aops"
-scopeId: "b4e7db65-7956-4c92-8cc1-0f16ef908d41"
-groupId: "1013e09a-3e44-4465-a659-d15f1a2c319d"
-groupUid: "domain-guides"
-documentId: "0683979e-8b57-4632-8f88-e021b19ec70c"
-documentVersionId: "99d3b4f8-c6aa-4ca8-9fe5-4751bc06a3a9"
-documentVersion: 2
-documentSlug: "projectman-user-guide"
-title: "Projectman User Guide"
-target: "markdown"
-pulledAt: "2026-08-23T20:34:02.002Z"
----
-<!-- READ-ONLY MIRROR: update Docman/source docs, then run aops-cli doc mirror pull. -->
-
 # Projectman User Guide v2
 
 _Release Notes:_ Clarifies the issue/feedback list data envelope, restores launcher context, and discloses pre-release --limit availability.

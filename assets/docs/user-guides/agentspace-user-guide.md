@@ -1,8 +1,10 @@
-<!-- Public AOPS asset. Authored workflows stay outside the generated appendix blocks. -->
-
 # Agentspace User Guide
 
+_Release Notes:_ Replaces stale Turkish and retired hosted-chat material; adds current memory, experience, playbook, skill discovery, agent-profile, activity, and Discuss semantics.
+
 ## 1 Ownership model
+
+### 1.1 Overview
 
 Agentspace is the durable context and reusable knowledge plane for AOPS agents.
 It owns memory, experience, playbooks, prompts, resources, artifacts, skills,
@@ -24,6 +26,8 @@ synopsis is not an independent source of truth. Link the canonical record
 instead of copying it into every system.
 
 ## 2 Start with the smallest useful read
+
+### 2.1 Overview
 
 Check health and load a bounded context pack before reading full records:
 
@@ -49,6 +53,8 @@ or safety semantics matter.
 
 ### 3.1 What belongs in memory
 
+#### 3.1.1 Overview
+
 A useful memory item is an evidence pack, not a transcript. Include:
 
 1. request or purpose;
@@ -73,6 +79,8 @@ aops mem write --project-slug <slug> --mode decision \
 ```
 
 ### 3.2 Checkpoint and summary
+
+#### 3.2.1 Overview
 
 Write a short checkpoint after a meaningful milestone, decision, blocker, or
 handoff point:
@@ -100,6 +108,8 @@ resolved from the current working directory.
 
 ### 3.3 Compact and prune
 
+#### 3.3.1 Overview
+
 Compaction is a review workflow, not automatic deletion:
 
 ```bash
@@ -115,6 +125,8 @@ separate actions. Destructive pruning requires explicit operator intent plus
 `--apply --confirm`.
 
 ## 4 Projects, experience, and playbooks
+
+### 4.1 Overview
 
 Agentspace projects provide reusable-context ownership; they do not replace
 Projectman work tracking.
@@ -152,6 +164,8 @@ not a side effect of finishing a task.
 
 ## 5 Reusable hosted assets
 
+### 5.1 Overview
+
 Prompts and skills have version lifecycles. Resources are typed knowledge
 pointers. Artifacts describe or reference outputs; they are not an unlimited
 binary store.
@@ -183,6 +197,8 @@ read back the resulting record/version. Never hand-edit hosted mirrors.
 
 ## 6 Agent profiles and activity
 
+### 6.1 Overview
+
 An agent profile composes role intent and references to prompts, skills,
 resources, overlays, and additional context. It is not a substitute for runtime
 permissions or operator approval.
@@ -205,6 +221,8 @@ aops activity get --project-slug <slug> --id <activity-id> --summary --json
 ```
 
 ## 7 Structured discussions
+
+### 7.1 Overview
 
 Use `aops discuss` when a material decision benefits from independent stances
 and a durable conclusion. Small, reversible implementation choices do not need
@@ -258,6 +276,8 @@ room, session, receipt, and cursor behavior.
 
 ### 8.1 Live capability discovery
 
+#### 8.1.1 Overview
+
 When sugar does not cover an operation, discover the running server instead of
 guessing a tool id or payload:
 
@@ -274,6 +294,8 @@ count or a tool-id inventory.
 
 ### 8.2 Guide retrieval
 
+#### 8.2.1 Overview
+
 Use Docman retrieval rather than scanning every document:
 
 ```bash
@@ -288,6 +310,8 @@ aops view doc-page agentspace-user-guide#<section-slug> --max-bytes 6000
 
 ### 8.3 Common mistakes
 
+#### 8.3.1 Overview
+
 - putting task or review truth in memory instead of Projectman;
 - copying a full transcript into memory instead of recording evidence and refs;
 - loading every skill body before metadata search;
@@ -299,8 +323,13 @@ aops view doc-page agentspace-user-guide#<section-slug> --max-bytes 6000
 
 ## 9 Appendices
 
+### 9.1 Overview
+
 <!-- aops-generated:agentspace-command-catalog:start -->
-### Generated Agentspace command families
+
+### 9.2 Generated Agentspace command families
+
+#### 9.2.1 Overview
 
 > This compact appendix is generated from the public Commander registrations. It groups current leaf commands into eleven owner families instead of copying a large command-by-command or hosted-tool catalog. Regenerate it with `aops docs user-guide --guide agentspace`.
 
@@ -321,7 +350,10 @@ aops view doc-page agentspace-user-guide#<section-slug> --max-bytes 6000
 <!-- aops-generated:agentspace-command-catalog:end -->
 
 <!-- aops-generated:agentspace-discovery:start -->
-### Generated Agentspace discovery and routing guide
+
+### 9.3 Generated Agentspace discovery and routing guide
+
+#### 9.3.1 Overview
 
 > Sugar commands cover common Agentspace workflows. The running server catalog remains authoritative for hosted operations, so this guide does not freeze tool ids or tool counts.
 

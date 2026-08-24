@@ -1,23 +1,3 @@
----
-schemaVersion: 1
-entityType: "docman.document-mirror"
-readOnly: true
-source: "docman"
-projectId: "b4e7db65-7956-4c92-8cc1-0f16ef908d41"
-projectSlug: "aops"
-scopeId: "b4e7db65-7956-4c92-8cc1-0f16ef908d41"
-groupId: "eaea8cf5-e39e-4686-9167-73ff4fd0264b"
-groupUid: "aops-guides"
-documentId: "a20b7f5c-c8bc-4afa-ba34-32135e5c73b9"
-documentVersionId: "9c1119ee-ad5d-4e8c-b5df-62baef7e7437"
-documentVersion: 21
-documentSlug: "aops-cli-user-guide"
-title: "AOPS CLI User Guide"
-target: "markdown"
-pulledAt: "2026-08-23T17:00:59.727Z"
----
-<!-- READ-ONLY MIRROR: update Docman/source docs, then run aops-cli doc mirror pull. -->
-
 # AOPS CLI User Guide
 
 _Release Notes:_ Translates the full composable guide section by section, preserves all commands and guards, and corrects hosted skill/prompt ownership to Agentspace.

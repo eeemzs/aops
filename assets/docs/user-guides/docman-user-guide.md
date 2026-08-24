@@ -1,23 +1,3 @@
----
-schemaVersion: 1
-entityType: "docman.document-mirror"
-readOnly: true
-source: "docman"
-projectId: "b4e7db65-7956-4c92-8cc1-0f16ef908d41"
-projectName: "aops"
-projectSlug: "aops"
-scopeId: "b4e7db65-7956-4c92-8cc1-0f16ef908d41"
-groupId: "1013e09a-3e44-4465-a659-d15f1a2c319d"
-documentId: "a348eb55-03cb-47d2-88bf-5a32deaae61f"
-documentVersionId: "bdf0c67b-25d8-4096-879e-a8d6e6040d9b"
-documentVersion: 4
-documentSlug: "docman-user-guide"
-title: "Docman User Guide"
-target: "markdown"
-pulledAt: "2026-08-23T17:44:40.074Z"
----
-<!-- READ-ONLY MIRROR: update Docman/source docs, then run aops-cli doc mirror pull. -->
-
 # Docman User Guide
 
 _Release Notes:_ Adds the tested safe-delete recipe, stale-mirror semantics, validation-error contract, and generated CLI catalog entry.

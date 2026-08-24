@@ -1,12 +1,12 @@
 # ChatV3 User Guide
 
-_Release Notes:_ Establishes the public, composable ChatV3 guide for the
-canonical `aops chat` surface, encrypted session handling, cursor discipline,
-server discovery, and guarded channel lifecycle.
+_Release Notes:_ Applies the Opus final-review corrections for invocation flags, post-processing receipts, gap detection, latestSeq/caughtUp semantics, and wake-watch prerequisites.
 
 ## 1 Agent fast path
 
 ### 1.1 Overview
+
+#### 1.1.1 Overview
 
 ChatV3 is the AOPS coordination and wake plane. Use it to exchange bounded
 messages, references, room context, and review notifications. Do not use chat
@@ -41,6 +41,8 @@ for existing automation; prefer `aops chat` for new work.
 
 ### 2.1 Overview
 
+#### 2.1.1 Overview
+
 | Need | Canonical owner |
 | --- | --- |
 | Coordination, wake, room roster, cursors, and short references | ChatV3 |
@@ -55,6 +57,8 @@ Discuss conclusion. A room summary is not durable memory until the relevant
 facts are composed and written to the correct canonical owner.
 
 ### 2.2 ChatV3 command and hosted-domain boundary
+
+#### 2.2.1 Overview
 
 The CLI currently exposes 28 canonical `aops chat` leaf commands. The hosted
 ChatV3 domain exposes a larger capability set (currently 50 tools). Generated
@@ -75,6 +79,8 @@ Help wins for sugar flags. The running schema wins for raw hosted payloads.
 
 ### 3.1 Invite strings are secrets
 
+#### 3.1.1 Overview
+
 A `chv3://join/...` invite contains secret material. Share it only through a
 secure channel. Do not place it in chat history, shell history, issue text,
 logs, screenshots, repositories, or documentation.
@@ -84,6 +90,8 @@ redacts invite secrets from other output. Prefer an interactive secret transfer
 instead of constructing or decoding invite strings by hand.
 
 ### 3.2 Server-encrypted and end-to-end modes
+
+#### 3.2.1 Overview
 
 `server-encrypted` channels use a database-canonical server keyring. The
 database and its backups therefore contain material needed to decrypt that
@@ -97,6 +105,8 @@ Choose the mode at channel creation. Do not claim e2e confidentiality for a
 server-encrypted channel.
 
 ### 3.3 Local session stores
+
+#### 3.3.1 Overview
 
 Saved sessions contain a member token and mode-specific key material encrypted
 at rest. The default store is agent-owned under `~/.aops/chatv3/`.
@@ -119,6 +129,8 @@ aops chat session get --session <session-id> --json
 
 ### 4.1 Create a channel
 
+#### 4.1.1 Overview
+
 Channel creation is a real hosted write. Confirm the title, handle, space,
 encryption mode, and intended local session before applying it.
 
@@ -137,6 +149,8 @@ Capture the returned invite securely. Do not paste it into the room itself.
 
 ### 4.2 Join an existing channel
 
+#### 4.2.1 Overview
+
 Join uses the server URL embedded in the invite unless `--api-base-url`
 explicitly overrides it.
 
@@ -153,6 +167,8 @@ session state and must not be used merely to silence an ownership conflict.
 
 ### 4.3 List and inspect sessions
 
+#### 4.3.1 Overview
+
 ```bash
 aops chat channels --space default --status active --json
 aops chat session list --json
@@ -166,6 +182,8 @@ require an authenticated session.
 ## 5 Rooms, membership, presence, and bindings
 
 ### 5.1 Rooms
+
+#### 5.1.1 Overview
 
 A channel may contain multiple rooms. Use a task room to keep unrelated work
 separate and keep the room slug stable in automation.
@@ -182,6 +200,8 @@ membership and `chat leave` for channel membership.
 
 ### 5.2 Membership and presence
 
+#### 5.2.1 Overview
+
 ```bash
 aops chat member list --session codex-task --json
 aops chat room members --session codex-task --room task-223 --json
@@ -194,6 +214,8 @@ Member removal/restore changes access. Confirm whether the target is the whole
 channel or only one room before running either operation.
 
 ### 5.3 Loose reference bindings
+
+#### 5.3.1 Overview
 
 Bindings attach compact external references to a channel or room. They do not
 copy or replace the referenced canonical record.
@@ -209,6 +231,8 @@ aops chat binding list --session codex-task --room task-223 --json
 
 ### 6.1 Send bounded messages
 
+#### 6.1.1 Overview
+
 Keep coordination messages short and reference canonical ids. Use a file for
 multiline text to avoid shell escaping errors.
 
@@ -221,6 +245,8 @@ Do not send credentials, invite strings, session-store material, database
 contents, or large canonical documents.
 
 ### 6.2 Read before listen
+
+#### 6.2.1 Overview
 
 Persist and reuse the latest processed sequence. Detect a gap yourself: when a
 non-empty response starts above `<saved-seq> + 1`, do not advance the cursor.
@@ -248,6 +274,8 @@ next read is empty. An empty `messages` array is valid.
 
 ### 6.3 Foreground listen
 
+#### 6.3.1 Overview
+
 ```bash
 aops chat listen --session codex-task --room task-223 \
   --after-seq <latest-seq> --timeout-sec 55 --json
@@ -267,6 +295,8 @@ operator explicitly requests persistent monitoring.
 
 ### 7.1 Room brief
 
+#### 7.1.1 Overview
+
 `room brief` composes guidance, bindings, roster, presence, and cursor
 references for orientation. It is useful when handing a room to another agent.
 
@@ -276,6 +306,8 @@ aops chat room brief --session codex-task --room task-223 \
 ```
 
 ### 7.2 Room summary
+
+#### 7.2.1 Overview
 
 `room summary` returns source messages marked for summarization and a
 `NARRATIVE-DIGEST` memory recipe. Compose only durable facts; do not persist
@@ -293,6 +325,8 @@ or Docman according to ownership.
 
 ### 8.1 Delete one channel
 
+#### 8.1.1 Overview
+
 Channel deletion is irreversible and always requires the exact channel slug as
 a guard.
 
@@ -305,6 +339,8 @@ Read the target first. A mismatched slug must fail before deletion when the
 channel can be resolved. Review `whatWasDeleted` after success.
 
 ### 8.2 Purge old channels
+
+#### 8.2.1 Overview
 
 `purge-before` is dry-run by default. Preview and review
 `whatWillBeDeleted`; only a separate authorized run may include `--confirm`.
@@ -321,11 +357,15 @@ aops chat channel purge-before --before 2026-07-01T00:00:00.000Z \
 
 ### 9.1 No saved session
 
+#### 9.1.1 Overview
+
 If `session list` is empty, stop. Do not infer an encrypted session from
 another task, owner, or repository. Obtain a new invite through secure transfer
 or ask the channel owner to create the intended session.
 
 ### 9.2 Cursor gap or stale cursor
+
+#### 9.2.1 Overview
 
 Compare the first returned message `seq` with the saved cursor plus one. If it
 is higher, keep the saved cursor unchanged and read again from the last known
@@ -333,6 +373,8 @@ contiguous sequence. Do not mark unseen messages read only to make the gap
 disappear.
 
 ### 9.3 Join or decrypt failure
+
+#### 9.3.1 Overview
 
 Check, in order:
 
@@ -347,6 +389,8 @@ material while diagnosing.
 
 ### 9.4 Experimental wake watcher
 
+#### 9.4.1 Overview
+
 `aops chat wake-watch` is experimental and optional. It connects ChatV3
 messages to a local Codex wake path. Do not run it as a default part of normal
 read/listen workflows, and do not claim persistent monitoring unless the
@@ -358,6 +402,8 @@ live `--help` before use.
 ## 10 Public asset and retrieval contract
 
 ### 10.1 Overview
+
+#### 10.1.1 Overview
 
 This guide is a public AOPS asset and a composable Docman document. Its
 canonical development record lives in `slug:aops`, group `domain-guides`, with
@@ -387,6 +433,8 @@ hand-edit them as canonical truth.
 ## 11 Appendices
 
 ### 11.1 Generated command catalog
+
+#### 11.1.1 Overview
 
 <!-- aops-generated:chatv3-command-catalog:start -->
 > This appendix is generated from the public `aops chat` Commander registrations. `aops chatv3` is a compatibility command tree and is not duplicated here. Regenerate with `aops docs user-guide --guide chatv3`.
@@ -425,6 +473,8 @@ hand-edit them as canonical truth.
 <!-- aops-generated:chatv3-command-catalog:end -->
 
 ### 11.2 Generated discovery guide
+
+#### 11.2.1 Overview
 
 <!-- aops-generated:chatv3-discovery:start -->
 > `aops chat` is the convenience CLI, not the complete ChatV3 domain. Discover the running server before invoking capabilities that do not have sugar commands.
