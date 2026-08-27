@@ -1,6 +1,6 @@
 ---
 name: aops-cli-chat
-version: 10
+version: 11
 description: "Use when an AI agent needs the AOPS ChatV3 CLI playbook: encrypted channel/session handling, rooms, members, presence, bindings, cursor-safe read/listen loops, destructive guards, live tool discovery, or the optional experimental wake watcher."
 metadata:
   supersedes: "v9"
@@ -57,7 +57,7 @@ The installed launcher may be `aops`; the package launcher is `aops-cli`.
 1. Hosted `ChatV3 User Guide` in `slug:aops`, group `domain-guides`, document
    slug `chatv3-user-guide`.
 2. Targeted mirror:
-   `.aops/docman/domain-guides/chatv3-user-guide.md` (read-only cache).
+   `.aops-cache/docman/domain-guides/chatv3-user-guide.md` (read-only cache).
 3. Exact flags: `aops chat <command> --help`.
 4. Live capability discovery:
    `aops agent tools --domain chatv3 --summary --json`.

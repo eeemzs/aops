@@ -1,6 +1,6 @@
 ---
 name: aops-loop-interactive
-version: 5
+version: 6
 description: "Operator-facing interactive AOPS loop guide. Use when an operator wants to start, inspect, fan out, resume, or close out the aops-cli loop lifecycle with questions first, dry-run readiness, loop-pack preview, supervised-run double gates, parallel/worktree fan-out (v2), resumable agent sessions and short-lived resume-on-trigger (resume-agent / watch / session-reconcile), hosted-runner-v2 contract evaluation, explicit Runner-backed durable orchestration via --hosted-runner-mode=require-hosted, foreground listening, and Projectman review truth."
 metadata:
   short-description: "Interactive AOPS loop lifecycle guide (v1 + v2 fan-out + resume + Runner delegation)"
@@ -29,7 +29,7 @@ chat ledger, or review system.
 Canonical command details come from `aops-cli loop --help` and the nested
 `aops-cli loop plan|pack|start|resume-agent|watch|session-reconcile|stop|resume|listen|status|parallel-plan|worktree-init|maker-run|slice-merge|cleanup|runner-eval --help`
 surfaces. If this skill and CLI help disagree, CLI help wins. For a full prose walkthrough, point the
-operator at the hosted Docman guide `aops-guides/aops-loop-user-guide` (read-only mirror at `.aops/docman/aops-guides/aops-loop-user-guide.md`).
+operator at the hosted Docman guide `aops-guides/aops-loop-user-guide` (read-only mirror at `.aops-cache/docman/aops-guides/aops-loop-user-guide.md`).
 
 ## Placement
 

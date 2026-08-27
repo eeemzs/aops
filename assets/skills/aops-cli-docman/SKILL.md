@@ -1,6 +1,6 @@
 ---
 name: aops-cli-docman
-version: 14
+version: 15
 description: "Use when an AI agent needs the AOPS CLI Docman playbook: composable document authoring, CRUD-first edits, guarded import, safe delete, publish and mirror refresh, and index/summary/search/answer retrieval gates."
 metadata:
   supersedes: "v13"
@@ -57,7 +57,7 @@ Use `aops-cli-core` for repo context and guard flags, `aops-cli-projectman` for 
 5. Live discovery: `aops agent tools --domain docman --summary --json`.
 6. Raw schema: `aops agent schema --tool docman.<operation> --summary --json`.
 
-`.aops/docman/**` is a read-only cache. Never hand-edit it as canonical truth.
+`.aops-cache/docman/**` is a read-only cache. Never hand-edit it as canonical truth.
 
 ## Command Map
 
@@ -118,7 +118,7 @@ Use full import only when the complete document structure truly changes:
 ```bash
 aops doc import --from-markdown --document-version-id <docver-id> \
   --source ./candidate.md \
-  --baseline ./.aops/docman/<group>/<document>.md \
+  --baseline ./.aops-cache/docman/<group>/<document>.md \
   --guard-target "<intended heading path or title>" \
   --dry-run --json
 ```
@@ -173,7 +173,7 @@ Sugar option names may differ from raw schema fields. Sugar help wins for `aops 
 
 ## Anti-Patterns
 
-1. Hand-editing `.aops/docman/**` as canonical truth.
+1. Hand-editing `.aops-cache/docman/**` as canonical truth.
 2. Full import for a one-page edit.
 3. Publishing without current-version and expected-previous guards.
 4. Skipping index/summary/search/answer after a guide or ADR change.

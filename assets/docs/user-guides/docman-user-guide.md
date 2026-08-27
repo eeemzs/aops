@@ -1,6 +1,6 @@
 # Docman User Guide
 
-_Release Notes:_ Adds the tested safe-delete recipe, stale-mirror semantics, validation-error contract, and generated CLI catalog entry.
+_Release Notes:_ Updates Docman mirror examples and policy paths to .aops-cache/docman.
 
 ## 1 Agent fast path
 
@@ -15,7 +15,7 @@ entire guide:
 3. When a hosted capability is required, do not guess the tool name or input:
    run `aops agent tools --domain docman --summary --json`, then
    `aops agent schema --tool <tool-id> --summary --json`.
-4. Write canonical state to the server. Never hand-edit `.aops/docman/**`.
+4. Write canonical state to the server. Never hand-edit `.aops-cache/docman/**`.
 5. For a single-page **content** change, fork the current version with
    `clone_all`, fork the page version with `draft-save`, and atomically switch
    the current/published pointer with `set-current-version` instead of using a
@@ -68,7 +68,7 @@ The hosted operator playbook for Docman is the `aops-cli-docman` skill.
 
 Development authoring truth is the `slug:aops` Docman record on AOPS's
 canonical server. The repository-local `USER_GUIDE.md` is a source-parity and
-domain-development reference; `.aops/docman/**` is a read-only mirror/cache.
+domain-development reference; `.aops-cache/docman/**` is a read-only mirror/cache.
 When preparing a public release, materialize the published/current Docman
 version into the physical asset file. Public assets are consumed as files on
 user machines; do not automatically import every global public asset into each
@@ -236,7 +236,7 @@ aops-cli doc index build --document-version-id <docver-id> --project-name eops -
 aops-cli doc summary build --document-version-id <docver-id> --project-name eops --json
 aops-cli doc search --document-version-id <docver-id> --q "top thin bar" --ensure summary --json
 aops-cli doc answer --document-version-id <docver-id> --q "How should panels work?" --ensure summary --json
-aops-cli doc mirror pull --group-uid <group-uid> --out-dir .aops/docman --target markdown --project-name eops --apply --json
+aops-cli doc mirror pull --group-uid <group-uid> --out-dir .aops-cache/docman --target markdown --project-name eops --apply --json
 ```
 
 When one Markdown file needs a heading-graph import, use the dedicated import
@@ -247,7 +247,7 @@ aops-cli doc import \
   --from-markdown \
   --document-version-id <clean-docver-id> \
   --source ./ui-system-v2.md \
-  --baseline ./.aops/docman/architecture/ui-system-v2.md \
+  --baseline ./.aops-cache/docman/architecture/ui-system-v2.md \
   --guard-target "Target Section Or Page" \
   --dry-run \
   --json
@@ -256,7 +256,7 @@ aops-cli doc import \
   --from-markdown \
   --document-version-id <clean-docver-id> \
   --source ./ui-system-v2.md \
-  --baseline ./.aops/docman/architecture/ui-system-v2.md \
+  --baseline ./.aops-cache/docman/architecture/ui-system-v2.md \
   --guard-target "Target Section Or Page" \
   --synthesize-overview-pages \
   --dry-run \
@@ -298,7 +298,7 @@ Full-import guardrail:
 
 Notes:
 
-1. `.aops/docman/**` is a read-only mirror, not canonical source.
+1. `.aops-cache/docman/**` is a read-only mirror, not canonical source.
 2. `doc mirror pull` produces a materialized copy from hosted Docman and writes
    the index.
 3. If the repository config has no slug, use `--project-name` instead of
@@ -607,7 +607,7 @@ validation error (HTTP 400). It must never be reported as a server failure, and
 the document must remain readable after the rejected request.
 
 Canonical deletion does not remove bytes that were already written to a local
-`.aops/docman` mirror or another `--out-dir`. Those files are stale read-only
+`.aops-cache/docman` mirror or another `--out-dir`. Those files are stale read-only
 cache data until explicitly reconciled. A targeted mirror pull for the deleted
 slug fails because no hosted document matches, and it intentionally does not
 erase the old file. Remove or replace only the exact known local mirror path as
@@ -619,7 +619,7 @@ a separate filesystem action after confirming the hosted not-found.
 
 Do not confuse Docman's three mirror and import concepts:
 
-1. `doc mirror pull`: server truth -> `.aops/docman/**` read-only mirror.
+1. `doc mirror pull`: server truth -> `.aops-cache/docman/**` read-only mirror.
 2. `doc mirror push`: root `*.md` import utility; not a general update or
    version-authoring path.
 3. `doc import --from-markdown`: the dedicated authoring/migration surface that
@@ -666,7 +666,7 @@ Mirror pull:
 ```bash
 aops-cli doc mirror pull \
   --group-uid eops-ui \
-  --out-dir .aops/docman \
+  --out-dir .aops-cache/docman \
   --target markdown \
   --project-name eops \
   --apply \
@@ -675,7 +675,7 @@ aops-cli doc mirror pull \
 
 Checks after mirror pull:
 
-1. The `.aops/docman/index.md` read-only index must exist.
+1. The `.aops-cache/docman/index.md` read-only index must exist.
 2. `documentVersionId` and `documentVersion` in document frontmatter must
    identify the expected version.
 3. An agent may read the mirror for exact wording. For retrieval questions,

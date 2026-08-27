@@ -1,6 +1,6 @@
 ---
 name: aops-cli-projectman
-version: 19
+version: 20
 description: "Use when an AI agent needs the AOPS CLI Projectman playbook: server-canonical boards, tasks, sprints, microtasks, issues, feedback, review requests/results/re-reviews, status audit, and PM-bound handoff."
 metadata:
   supersedes: "v18"
@@ -36,7 +36,7 @@ wins for raw hosted payloads.
 4. Read the exact record and nested `--help` before a write.
 5. Use `--preview` where supported, then `--apply`; delete needs
    `--apply --confirm`.
-6. Treat `.aops/projectman/**` as a read-only derived cache.
+6. Treat `.aops-cache/projectman/**` as a read-only derived cache.
 
 The installed launcher may be `aops`; the package launcher is `aops-cli`.
 
@@ -64,7 +64,7 @@ written knowledge, `aops-cli-agentspace` for durable memory, and
    document `0683979e-8b57-4632-8f88-e021b19ec70c`, current version
    `99d3b4f8-c6aa-4ca8-9fe5-4751bc06a3a9`.
 2. Repo mirror:
-   `.aops/docman/domain-guides/projectman-user-guide.md` (read-only).
+   `.aops-cache/docman/domain-guides/projectman-user-guide.md` (read-only).
 3. Domain-development source: `domains/projectman/USER_GUIDE.md`.
 4. Exact flags: `aops pm --help` and the smallest nested `--help`.
 5. Raw tool discovery: `aops agent tools --domain projectman --summary --json`
@@ -192,7 +192,7 @@ create a fake task solely to hold narrative memory.
 ## Always Rules
 
 1. Always author Projectman through the hosted gateway; never hand-edit
-   `.aops/projectman/**`.
+   `.aops-cache/projectman/**`.
 2. Always select the intended project explicitly when multiple links exist.
 3. Always read nested `--help`; fetch live JSON Schema before raw invoke or
    sugar implementation.

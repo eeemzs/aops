@@ -1,9 +1,9 @@
 ---
 name: aops-cli-core
-version: 17
-description: "Use when an AI agent needs AOPS CLI core operator playbook: help-first discovery, guard flags, project registry/project selection, partitioned sync, archive lifecycle, server-canonical vs local cache rules, hosted invoke fallback, doc-reading ladder, and schema fallback. Thin guide; .aops/docman/aops-guides/aops-cli-user-guide.md and command --help are authoritative."
+version: 19
+description: "Use when an AI agent needs AOPS CLI core operator playbook: help-first discovery, guard flags, project registry/project selection, partitioned sync, archive lifecycle, server-canonical vs local cache rules, hosted invoke fallback, doc-reading ladder, and schema fallback. Thin guide; .aops-cache/docman/aops-guides/aops-cli-user-guide.md and command --help are authoritative."
 metadata:
-  supersedes: "v16"
+  supersedes: "v18"
   short-description: "AOPS CLI core operator thin discipline guide"
   tags:
     - cli
@@ -23,7 +23,7 @@ metadata:
 
 `aops-cli` is the operator plane. It routes agents to domain owners; it is not the semantic owner of planning, memory, documents, files, or execution.
 
-This is a thin discipline guide. Deep mechanics live in `.aops/docman/aops-guides/aops-cli-user-guide.md`; exact command shape lives in live `--help`. If this skill conflicts with either, `--help` and the user guide win.
+This is a thin discipline guide. Deep mechanics live in `.aops-cache/docman/aops-guides/aops-cli-user-guide.md`; exact command shape lives in live `--help`. If this skill conflicts with either, `--help` and the user guide win.
 
 ## Use This Skill For
 
@@ -40,11 +40,11 @@ Use the family skills for domain work: projectman for PM (including review-reque
 
 ## Canonical Sources
 
-1. `.aops/docman/aops-guides/aops-cli-user-guide.md`, read by section name/keyword, not by fragile section number.
+1. `.aops-cache/docman/aops-guides/aops-cli-user-guide.md`, read by section name/keyword, not by fragile section number.
 2. `aops-cli --help`, `aops-cli <family> --help`, and nested `--help`.
 3. Domain user guides: `domains/<domain>/USER_GUIDE.md` for semantic rules.
-4. Hosted prompt/skill truth through `aops-cli prompt|skill ...`; `.aops/hosted/**` is only a mirror.
-5. Hosted Docman guide truth through `aops-cli doc ...`; `.aops/docman/**` is only a mirror.
+4. Hosted prompt/skill truth through `aops-cli prompt|skill ...`; `.aops-cache/hosted/**` is only a mirror.
+5. Hosted Docman guide truth through `aops-cli doc ...`; `.aops-cache/docman/**` is only a mirror.
 6. Repo project registry truth: `.aops/aops.config.json`, inspected with `aops-cli project links list --json`.
 
 ## Help-First Workflow
@@ -100,9 +100,9 @@ The hosted AOPS server is the source of truth for planning and Agentspace state.
 
 Read-only local caches (refreshed by `sync pull`, never an authoring source):
 
-1. `.aops/projectman/**`, `.aops/agentspace/memory/items/**`, `.aops/agentspace/discussions/**`, `.aops/agentspace/collabs/**`: a local cache of server state for offline/read inspection.
-2. `.aops/hosted/prompts/**` and `.aops/hosted/skills/**`: hosted prompt/skill mirrors; refresh after a hosted prompt/skill publish with `aops-cli sync pull --apply --hosted-project-slug aops --json`.
-3. `.aops/docman/**`: Docman guide mirrors; refresh with `aops-cli doc mirror pull ... --apply --json`. `sync pull` does not refresh Docman guide mirrors.
+1. `.aops-cache/projectman/**`, `.aops-cache/agentspace/memory/items/**`, `.aops-cache/agentspace/discussions/**`, `.aops-cache/agentspace/collabs/**`: a local cache of server state for offline/read inspection.
+2. `.aops-cache/hosted/prompts/**` and `.aops-cache/hosted/skills/**`: hosted prompt/skill mirrors; refresh after a hosted prompt/skill publish with `aops-cli sync pull --apply --hosted-project-slug aops --json`.
+3. `.aops-cache/docman/**`: Docman guide mirrors; refresh with `aops-cli doc mirror pull ... --apply --json`. `sync pull` does not refresh Docman guide mirrors.
 
 Do not hand-edit a read-only cache or mirror as canonical truth; change hosted truth through the hosted CLI and refresh the cache.
 
@@ -111,11 +111,11 @@ Do not hand-edit a read-only cache or mirror as canonical truth; change hosted t
 The repo project registry lets one repo bind more than one hosted project so `pm --project-slug <slug>` (and the other family commands) can target the intended hosted project. Authoring is always hosted; the registry only controls selection and where the read-only local cache lives.
 
 ```bash
-aops-cli project link --slug aops --mode local --local-root .aops/projects/aops --apply --json
+aops-cli project link --slug aops --mode local --local-root .aops-cache/projects/aops --apply --json
 aops-cli project link --slug cockpit --mode hosted-only --apply --json
 aops-cli project links list --json
-aops-cli project migrate-local-root --project-slug aops --local-root .aops/projects/aops --dry-run --json
-aops-cli project migrate-local-root --project-slug aops --local-root .aops/projects/aops --apply --confirm --json
+aops-cli project migrate-local-root --project-slug aops --local-root .aops-cache/projects/aops --dry-run --json
+aops-cli project migrate-local-root --project-slug aops --local-root .aops-cache/projects/aops --apply --confirm --json
 ```
 
 Operational facts:
@@ -134,6 +134,9 @@ Sync is a read/mirror operation that refreshes the local cache from the hosted s
 aops-cli sync status --project-slug aops --json
 aops-cli sync diff --project-slug aops --json
 aops-cli sync pull --project-slug aops --apply --json
+aops-cli sync pull --project-slug aops --only projectman --apply --json
+aops-cli sync pull --project-slug aops --only agentspace --apply --json
+aops-cli sync pull --hosted-project-slug aops --only hosted-skills --apply --json
 aops-cli sync status --all-projects --json
 aops-cli sync pull --all-projects --apply --json
 ```
@@ -143,7 +146,9 @@ Shipped behavior:
 1. `sync --project-slug <slug>` resolves the project link from `.aops/aops.config.json` and scopes the cache refresh to that project's `localRoot`.
 2. `sync --all-projects` runs `status`, `diff`, `pull`, or `bootstrap` once per runnable local project, skips ambiguous local projects without `localRoot` when multiple local projects exist, and reports project-level errors without fail-fast.
 3. `sync pull` and `sync bootstrap` are project-level mirror commands. Use `--hosted-project-id|--hosted-project-name|--hosted-project-slug` to refresh hosted prompt/skill mirrors for additional hosted projects.
-4. To author PM records, use the hosted `pm --project-slug` CRUD path described in `aops-cli-projectman`; sync does not write server records.
+4. `sync pull|bootstrap --only <partition>` accepts the repeatable partitions `projectman`, `agentspace`, `hosted-skills`, and `hosted-prompts`. Omitting `--only` preserves the full refresh. Prefer a scoped synchronous pull when only one cache family changed so completion and errors stay visible.
+5. Docman remains a separate owner: refresh it with `aops-cli doc mirror pull`. `--only docman` is rejected.
+6. To author PM records, use the hosted `pm --project-slug` CRUD path described in `aops-cli-projectman`; sync does not write server records.
 
 ## Archive Lifecycle
 
@@ -211,7 +216,7 @@ If sugar returns 400/validation errors, stop retrying random flag variants. Comp
 
 1. Guessing flags or payload fields from memory.
 2. Treating `aops-cli` as the domain owner.
-3. Hand-editing `.aops/hosted/**` or `.aops/docman/**` mirrors, or the `.aops/projectman/**` / `.aops/agentspace/**` local cache, as canonical truth.
+3. Hand-editing `.aops-cache/hosted/**` or `.aops-cache/docman/**` mirrors, or the `.aops-cache/projectman/**` / `.aops-cache/agentspace/**` local cache, as canonical truth.
 4. Assuming `sync pull` refreshes Docman guide mirrors.
 5. Treating `--yes` as the missing write guard.
 6. Reading whole guides when a targeted search plus `view doc-page` is enough.

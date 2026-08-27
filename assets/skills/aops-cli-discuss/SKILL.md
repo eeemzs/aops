@@ -1,7 +1,7 @@
 ---
 name: aops-cli-discuss
-version: 3
-description: "Use when an AI agent runs a standalone server-canonical AI discussion topic with aops-cli: the design-decision ritual (independent research, two-agent turn protocol, kind=final-stance, deterministic conclude outputs), slug-first selectors, and JSON-driven stop-state reads. discuss = the decision/consensus surface only; coordinate/wake via aops-cli-chat, track review + execution truth via aops-cli-projectman. Thin discipline guide; canonical mechanics live in .aops/docman/domain-guides/agentspace-user-guide.md and command --help."
+version: 4
+description: "Use when an AI agent runs a standalone server-canonical AI discussion topic with aops-cli: the design-decision ritual (independent research, two-agent turn protocol, kind=final-stance, deterministic conclude outputs), slug-first selectors, and JSON-driven stop-state reads. discuss = the decision/consensus surface only; coordinate/wake via aops-cli-chat, track review + execution truth via aops-cli-projectman. Thin discipline guide; canonical mechanics live in .aops-cache/docman/domain-guides/agentspace-user-guide.md and command --help."
 metadata:
   supersedes: "v2"
   short-description: "AOPS CLI standalone discuss / decision-ritual guide"
@@ -19,7 +19,7 @@ metadata:
 
 # AOPS CLI Discuss
 
-`aops-cli discuss` manages **standalone AI discussion topics** that are server-canonical (hosted discuss authoring): create, append turns, and read through the hosted gateway. `.aops/agentspace/discussions/**` is a read-only local cache of that server state, refreshed by `sync pull`. discuss is the decision/consensus surface in the AOPS coordination triad:
+`aops-cli discuss` manages **standalone AI discussion topics** that are server-canonical (hosted discuss authoring): create, append turns, and read through the hosted gateway. `.aops-cache/agentspace/discussions/**` is a read-only local cache of that server state, refreshed by `sync pull`. discuss is the decision/consensus surface in the AOPS coordination triad:
 
 - **`aops-cli chat`** (hosted rooms/channels) = coordination, wake, catch-up → `aops-cli-chat`.
 - **`aops-cli pm`** (review-request/result, issue, feedback) = review + execution truth → `aops-cli-projectman`.
@@ -48,14 +48,14 @@ Participant roles for any discussion — initiator/driver, peer, primary, review
 
 When this skill is silent, ambiguous, or out of date, **defer to these**:
 
-1. `.aops/docman/domain-guides/agentspace-user-guide.md` — semantics for discuss topics, turns, the decision ritual, and loop discipline. Reference sections by name (numbers drift), e.g.:
+1. `.aops-cache/docman/domain-guides/agentspace-user-guide.md` — semantics for discuss topics, turns, the decision ritual, and loop discipline. Reference sections by name (numbers drift), e.g.:
    - "Coordination semantics (loop discipline and exit codes)" (search: exit code, loop discipline, wait, self-wakeup)
    - "Coordination semantics (review-request reply pairing)" (search: review-result, projectman.review-request, discussion-topic ref)
    - "Anti-patterns appendix" (search: anti-patterns, lifecycle, decision ledger)
    - "Troubleshooting" (search: troubleshooting, ready-to-conclude, open question block)
 2. `aops-cli discuss --help` and nested subcommand help — flag-level detail and the current argument schema.
 3. Section-focused reading via the doc discovery ladder (see **Pointers** below).
-4. Read-only local cache: `.aops/agentspace/discussions/topics/<slug>-<topic-slug>/` (`topic.md`, `turns/*.md`, `outputs/*.md`) mirrors server state for offline reads; author through the hosted CLI, not by hand-editing the cache.
+4. Read-only local cache: `.aops-cache/agentspace/discussions/topics/<slug>-<topic-slug>/` (`topic.md`, `turns/*.md`, `outputs/*.md`) mirrors server state for offline reads; author through the hosted CLI, not by hand-editing the cache.
 
 ## Discovery: which command for what
 
@@ -75,7 +75,7 @@ When this skill is silent, ambiguous, or out of date, **defer to these**:
 | Write conclude scaffolds, move to `concluding` | `aops-cli discuss conclude --topic <topic-slug> --apply --json` |
 | Mark an invalid/unwanted topic abandoned | `aops-cli discuss abandon --topic <topic-slug> --apply --json` |
 
-Turn kinds: `statement | question | answer | objection | concession | proposal | final-stance`. Discuss topics are server-canonical (hosted authoring); `.aops/agentspace/discussions/**` is a read-only cache refreshed by `sync pull`. There is no auto-promote into memory/experience — promotion stays explicit.
+Turn kinds: `statement | question | answer | objection | concession | proposal | final-stance`. Discuss topics are server-canonical (hosted authoring); `.aops-cache/agentspace/discussions/**` is a read-only cache refreshed by `sync pull`. There is no auto-promote into memory/experience — promotion stays explicit.
 
 ## Mandatory design-decision ritual (standalone)
 
@@ -165,7 +165,7 @@ This replaces the retired `collab start --from-discuss` / conclude-writeback pat
 5. **Treating a chat room (or chat in general) as the decision ledger** — the durable decision is the discuss topic + its conclude outputs; bind it into chat, do not decide only in chat.
 6. **Auto-defaulting participant roles** by agent name / runtime brand / convention instead of taking them from the operator.
 7. **Setting `--expect-next` to a different agent than `--agent`**, or ignoring a `20` (operator block) by trying to write through it.
-8. **Hand-editing the `.aops/agentspace/discussions/**` cache** as if it were authoring truth; it is a read-only mirror of server state — author through the hosted CLI and refresh with `sync pull`.
+8. **Hand-editing the `.aops-cache/agentspace/discussions/**` cache** as if it were authoring truth; it is a read-only mirror of server state — author through the hosted CLI and refresh with `sync pull`.
 
 ---
 

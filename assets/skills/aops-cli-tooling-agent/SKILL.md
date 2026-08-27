@@ -1,6 +1,6 @@
 ---
 name: aops-cli-tooling-agent
-version: 41
+version: 42
 description: "Compatibility index for AOPS CLI modular operator skills. Routes agents to aops-cli-core, aops-cli-discuss, aops-cli-chat, aops-cli-projectman, aops-cli-docman, aops-cli-agentspace, aops-cli-fileman, aops-cli-tasker, aops-cli-view, plus help-first and hosted mirror rules. Kept for old prompts/runtimes."
 metadata:
   supersedes: "v40"
@@ -28,16 +28,16 @@ This skill is a **compatibility pointer**. The old monolithic `aops-cli-tooling-
 
 | Need | Skill | Canonical user guide |
 |------|-------|----------------------|
-| CLI core, guard flags, sync, hosted mirror, raw invoke | **`aops-cli-core`** | `.aops/docman/aops-guides/aops-cli-user-guide.md` (Help-first model, Guard flag konvansiyonu, Local cache and hosted server sections) |
-| discuss / decision / consensus (standalone topics, conclude outputs) | **`aops-cli-discuss`** | `.aops/docman/domain-guides/agentspace-user-guide.md` (Coordination semantics, Anti-patterns appendix sections) |
-| chat / coordination / wake (hosted rooms, DMs, listen/catchup) | **`aops-cli-chat`** | `.aops/docman/domain-guides/agentspace-user-guide.md` (Coordination semantics) |
+| CLI core, guard flags, sync, hosted mirror, raw invoke | **`aops-cli-core`** | `.aops-cache/docman/aops-guides/aops-cli-user-guide.md` (Help-first model, Guard flag konvansiyonu, Local cache and hosted server sections) |
+| discuss / decision / consensus (standalone topics, conclude outputs) | **`aops-cli-discuss`** | `.aops-cache/docman/domain-guides/agentspace-user-guide.md` (Coordination semantics, Anti-patterns appendix sections) |
+| chat / coordination / wake (hosted rooms, DMs, listen/catchup) | **`aops-cli-chat`** | `.aops-cache/docman/domain-guides/agentspace-user-guide.md` (Coordination semantics) |
 | review-request/result, re-review, issues, operator-approved closeout | **`aops-cli-projectman`** | `domains/projectman/USER_GUIDE.md` |
 | Projectman board/sprint/task/issue/feedback (board-lifecycle folded) | **`aops-cli-projectman`** | `domains/projectman/USER_GUIDE.md` (Projectman model, Common workflow scenarios, Cross-session handoff sections) |
 | Docman CRUD-first authoring, search, answer, publish | **`aops-cli-docman`** | `domains/docman/USER_GUIDE.md` |
-| Agentspace memory/project/prompt/resource/artifact/skill/agent-profile | **`aops-cli-agentspace`** | `.aops/docman/domain-guides/agentspace-user-guide.md` |
+| Agentspace memory/project/prompt/resource/artifact/skill/agent-profile | **`aops-cli-agentspace`** | `.aops-cache/docman/domain-guides/agentspace-user-guide.md` |
 | File snapshot/copy/backup/diff/restore | **`aops-cli-fileman`** | `domains/fileman/USER_GUIDE.md` |
 | Tasker / Runner workflows / tracked execution | **`aops-cli-tasker`** | `domains/tasker/USER_GUIDE.md` |
-| Read-only local-cache cockpit views | **`aops-cli-view`** | `.aops/docman/aops-guides/aops-cli-user-guide.md` (view subsection) |
+| Read-only local-cache cockpit views | **`aops-cli-view`** | `.aops-cache/docman/aops-guides/aops-cli-user-guide.md` (view subsection) |
 | Deprecated board-lifecycle pointer | `aops-cli-board-lifecycle` (folded into projectman) | — |
 
 ## Canonical source split
@@ -60,21 +60,21 @@ aops-cli <family> <subcommand> --help
 Then read the matching domain guide:
 
 1. `domains/projectman/USER_GUIDE.md`
-2. `.aops/docman/domain-guides/agentspace-user-guide.md`
+2. `.aops-cache/docman/domain-guides/agentspace-user-guide.md`
 3. `domains/docman/USER_GUIDE.md`
 4. `domains/fileman/USER_GUIDE.md`
 5. `domains/tasker/USER_GUIDE.md`
-6. `.aops/docman/aops-guides/aops-cli-user-guide.md`
+6. `.aops-cache/docman/aops-guides/aops-cli-user-guide.md`
 
 ## Hosted mirror rule
 
-`.aops/hosted/**` is read-only mirror context. Hosted skill/prompt truth is changed through `aops-cli skill ...` and `aops-cli prompt ...`, then refreshed locally:
+`.aops-cache/hosted/**` is read-only mirror context. Hosted skill/prompt truth is changed through `aops-cli skill ...` and `aops-cli prompt ...`, then refreshed locally:
 
 ```bash
 aops-cli sync pull --apply --hosted-project-slug aops --json
 ```
 
-Docman guide mirrors under `.aops/docman/**` are separate. Refresh them with `aops-cli doc mirror pull --project-slug aops --group-uid <group-uid> --out-dir ./.aops/docman --apply --json`; `sync pull` does not refresh guide mirrors. In non-interactive automation, `--yes` can be added to supported commands as fail-fast mode, but it is not proof that an abort was fixed.
+Docman guide mirrors under `.aops-cache/docman/**` are separate. Refresh them with `aops-cli doc mirror pull --project-slug aops --group-uid <group-uid> --out-dir ./.aops-cache/docman --apply --json`; `sync pull` does not refresh guide mirrors. In non-interactive automation, `--yes` can be added to supported commands as fail-fast mode, but it is not proof that an abort was fixed.
 
 ## Guard reminder
 

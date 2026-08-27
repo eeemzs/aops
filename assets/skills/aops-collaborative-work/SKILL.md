@@ -1,10 +1,10 @@
 ---
 name: aops-collaborative-work
-version: 11
+version: 13
 description: "Use when an AI agent starts or runs an AOPS-backed work session: token-efficient startup reads, solo-first agentic flow with PM/memory/doc discipline, optional async PM review requests across sessions, optional hosted chat-room task intake, optional multi-agent coordination via hosted chat + PM review + standalone discuss, sub-skill routing, and fast command recipes with help/schema fallback. Includes the verify-first consensus-to-build operational recipe for chat-room work."
 metadata:
-  supersedes: "fdb11741-f432-4094-b390-7957f2f114cf"
-  updatedFor: "chatv3-skill-sync-c1"
+  supersedes: "fefa3617-9c71-4ade-bf63-63d10c07e0b7"
+  updatedFor: "projectman-enum-help-alignment-20260826"
   short-description: "Solo-first agentic AOPS session playbook; chat-room/discuss optional"
   tags:
     - aops
@@ -63,14 +63,14 @@ aops-cli pm issue list --status open --json              # open defects/risks
 aops-cli pm review-request list --status open --json     # async RRs waiting from prior sessions
 ```
 
-Mirror refresh only when missing/stale: `aops-cli sync pull --apply --hosted-project-slug aops --json` (hosted skills/prompts) and `aops-cli doc mirror pull --project-slug aops --group-uid <aops-guides|domain-guides> --out-dir ./.aops/docman --apply --json`.
+Mirror refresh only when missing/stale: `aops-cli sync pull --apply --hosted-project-slug aops --json` (hosted skills/prompts) and `aops-cli doc mirror pull --project-slug aops --group-uid <aops-guides|domain-guides> --out-dir ./.aops-cache/docman --apply --json`.
 
 ## Layered rules and reminder packs
 
 `result.sessionGuidance` and `aops-cli start --reminder` are bounded read-only packs. They are for orientation, not mutation:
 
 - L1 runtime pointers: repo `AGENTS.md`, ChatV3/channel rules, and live command refs. Read the pointer or short rule, not every linked document.
-- ChatV3 product-room shorthand: use `aops-cli-chat` for exact `chatv3` commands. It covers `--mode server-encrypted|e2e`, the `srv` invite form, and channel lifecycle sugar (`channel create`, `channels`, `channel delete`, `channel purge-before`). Deep mechanics live in Docman `slug:aops group:domain-guides document:chatv3-user-guide`; the repo mirror `.aops/docman/domain-guides/chatv3-user-guide.md` is read-only.
+- ChatV3 product-room shorthand: use `aops-cli-chat` for exact `chatv3` commands. It covers `--mode server-encrypted|e2e`, the `srv` invite form, and channel lifecycle sugar (`channel create`, `channels`, `channel delete`, `channel purge-before`). Deep mechanics live in Docman `slug:aops group:domain-guides document:chatv3-user-guide`; the repo mirror `.aops-cache/docman/domain-guides/chatv3-user-guide.md` is read-only.
 - L2 discipline guardrails: guardrail id/title/phase/enforcement/evidence summary from `mission.policy` or the selected start discipline. Use full guide text only when a guardrail is unclear.
 - L3 playbook and experience briefs: accepted playbooks plus ranked experience items. Default experience limit is 3, hard max is 5; ranking is deterministic from task/mission/area/tag/recency hints.
 - `start --reminder` does not ask kickoff questions, serialize the full starter prompt, or write PM/memory/hosted state. Use it after interruptions, before a phase change, before RR/RRR, or when the operator says "hatirlat". Keep the pack around the soft 8-12 KB target; pull detail through the ladder only after it matters.
@@ -258,8 +258,8 @@ aops-cli pm review-request result --id <rr-id> --reviewer <reviewer> \
 aops-cli pm issue create --source review --review-request <rr-id> \
   --task <task-id> --sprint <sprint-id> --title "<material finding>" \
   --severity <low|medium|high|critical> --apply --json
-aops-cli pm feedback create --source review --task <task-id> --sprint <sprint-id> \
-  --title "<suggestion>" --type suggestion --severity <low|medium|high> \
+aops-cli pm feedback create --source agent --task <task-id> --sprint <sprint-id> \
+  --title "<suggestion>" --type improvement --severity <low|medium|high> \
   --suggestion "<recommended improvement>" --apply --json
 aops-cli mem checkpoint --subject sprint --id <sprint-id> --task-id <task-id> \
   --sprint-id <sprint-id> --content "<milestone, evidence, risks, next action>" \

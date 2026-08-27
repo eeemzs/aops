@@ -1,6 +1,6 @@
-# Projectman User Guide v2
+# Projectman User Guide
 
-_Release Notes:_ Clarifies the issue/feedback list data envelope, restores launcher context, and discloses pre-release --limit availability.
+_Release Notes:_ Updates Projectman mirror paths to .aops-cache and preserves server-canonical ownership.
 
 ## 1 Agent fast path
 
@@ -47,7 +47,7 @@ Use this sequence before reading the whole guide:
    `--apply`; destructive writes require both `--apply` and `--confirm`.
 6. Keep durable narrative context in Agentspace memory. Projectman notes should
    contain planning facts, references, acceptance criteria, and short evidence.
-7. Never hand-edit `.aops/projectman/**`. It is a derived local mirror, not
+7. Never hand-edit `.aops-cache/projectman/**`. It is a derived local mirror, not
    planning truth.
 
 ## 2 Ownership at a glance
@@ -572,7 +572,7 @@ evidence. Fix the canonical record or record the debt explicitly.
 
 #### 10.2.1 Overview
 
-1. Hand-editing `.aops/projectman/**`.
+1. Hand-editing `.aops-cache/projectman/**`.
 2. Treating a stale mirror as current hosted state.
 3. Copying one project's cache into another project partition.
 
@@ -703,12 +703,12 @@ prepare it. After publishing:
 
 1. build index and summary
 2. verify search and citation-first answer
-3. mirror-pull into `.aops/docman/domain-guides/projectman-user-guide.md`
+3. mirror-pull into `.aops-cache/docman/domain-guides/projectman-user-guide.md`
 4. materialize identical bytes into
    `aops/assets/docs/user-guides/projectman-user-guide.md`
 
 The guide must be tagged/grouped as a public asset. The repository-local
-`.aops` mirror remains derived and is not committed.
+`.aops-cache` mirror remains derived and is not committed.
 
 ## 14 Appendix A. Verified command catalog
 

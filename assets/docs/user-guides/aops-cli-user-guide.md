@@ -1,7 +1,5 @@
 # AOPS CLI User Guide
 
-_Release Notes:_ Translates the full composable guide section by section, preserves all commands and guards, and corrects hosted skill/prompt ownership to Agentspace.
-
 ## 1 Introduction
 
 ### 1.1 Overview
@@ -12,7 +10,7 @@ AOPS CLI is the shared command-line entry point for managing a local or
 self-hosted AOPS server. It resolves project context, provides guarded sugar
 commands, and falls back to the server's live agent-tool catalog when needed.
 The AOPS server is canonical for durable Projectman, Agentspace, and Docman
-records; `.aops/**` content in a repository is a refreshable, read-only working
+records; `.aops-cache/**` content in a repository is a refreshable, read-only working
 cache.
 
 This guide is long, so agents should not load it into context in full by
@@ -45,7 +43,7 @@ command list.
 
 The AOPS server owns writes to Projectman, Agentspace, and Docman records. The
 CLI provides guarded sugar commands for routine work and live agent-tool
-discovery for less common operations. The `.aops/**` tree in a repository is a
+discovery for less common operations. The `.aops-cache/**` tree in a repository is a
 reproducible, read-only working cache; editing its Markdown files does not
 update server state.
 
@@ -172,10 +170,7 @@ room message or local mirror.
 
 #### 12.1.1 Overview
 
-The current CLI has no generic `aops tasker` or `aops runner` sugar family. Use
-`aops pm` for human-readable project planning and live `aops agent tools
---domain tasker|runner` discovery for Tasker/Runner domain capabilities. Do not
-guess tool or payload names from this guide.
+Use `aops tasker` for human-first kanban board and task writes plus WorkGroup reads, and use `aops runner` for status, event, and artifact reads plus guarded stop, resume, and reconcile controls. Project planning and review remain owned by `aops pm`. For capabilities beyond sugar, use `aops agent tools --domain tasker --summary --json` and `aops agent schema --tool <tool-id> --summary --json`. The canonical workflows and ownership boundary live in the Tasker + Runner User Guide (`tasker-user-guide`); live command help owns exact syntax.
 
 ## 13 `.aops` local cache & sync
 
@@ -189,11 +184,11 @@ Projectman/Agentspace records; the repo registry only records which local
 directory mirrors a hosted project as a read-only cache:
 
 ```bash
-aops-cli project link --slug aops --mode local --local-root .aops/projects/aops --apply --json
+aops-cli project link --slug aops --mode local --local-root .aops-cache/projects/aops --apply --json
 aops-cli project link --slug demo --mode hosted-only --apply --json
 aops-cli project links list --json
-aops-cli project migrate-local-root --project-slug aops --local-root .aops/projects/aops --dry-run --json
-aops-cli project migrate-local-root --project-slug aops --local-root .aops/projects/aops --apply --confirm --json
+aops-cli project migrate-local-root --project-slug aops --local-root .aops-cache/projects/aops --dry-run --json
+aops-cli project migrate-local-root --project-slug aops --local-root .aops-cache/projects/aops --apply --confirm --json
 ```
 
 Contract:
@@ -201,7 +196,7 @@ Contract:
 1. `project link/links` manages only the repo project registry after verifying
    the hosted project exists and is not archived/deleted.
 2. `authoringMode: local` means a local cache directory is materialized under
-   `localRoot` (normally `.aops/projects/<slug>`). Create/write/read still go to
+   `localRoot` (normally `.aops-cache/projects/<slug>`). Create/write/read still go to
    the hosted server; `localRoot` is a read-only mirror refreshed by
    `aops-cli sync pull` (and `aops-cli doc mirror pull` for docs), not a
    repo-first source tree.
@@ -223,6 +218,9 @@ is canonical, so the cache is only ever pulled, never pushed back.
 ```bash
 aops-cli sync status --project-slug aops --json
 aops-cli sync pull --project-slug aops --apply --json
+aops-cli sync pull --project-slug aops --only projectman --apply --json
+aops-cli sync pull --project-slug aops --only agentspace --apply --json
+aops-cli sync pull --hosted-project-slug aops --only hosted-skills --apply --json
 aops-cli sync status --all-projects --json
 aops-cli sync pull --all-projects --apply --json
 ```
@@ -241,6 +239,13 @@ Rules:
    reported/skipped rather than treated as another project's cache.
 4. Because the server is canonical, conflict/drift resolution is not part of the
    pull: a refresh simply overwrites the local cache with current server state.
+5. `sync pull` and `sync bootstrap` accept repeatable `--only` flags with
+   `projectman`, `agentspace`, `hosted-skills`, and `hosted-prompts`. Omitting
+   `--only` preserves the complete refresh. Prefer a scoped synchronous pull
+   when only one cache family changed so completion and errors remain visible.
+6. Docman is intentionally not a sync partition. Refresh document mirrors with
+   `aops-cli doc mirror pull`; `--only docman` is rejected rather than silently
+   doing the wrong operation.
 
 #### 13.1.3 Archive lifecycle
 
@@ -298,7 +303,7 @@ aops-cli agent tools --domain projectman --q delete --summary --json
 #### 13.2.1 Overview
 
 The `view` command family is a read-only presentation layer. Default commands
-read `.aops/**` files from the read-only local cache. Canonical truth remains on
+read `.aops-cache/**` files from the read-only local cache. Canonical truth remains on
 the hosted server, and `sync pull` refreshes the cache. Explicit hosted commands
 (`hosted-projects`, `hosted-inventory`) call hosted list APIs for reads only;
 they do not sync, write caches or indexes, or run domain mutations. Default
@@ -432,7 +437,7 @@ aops-cli view task Duplicate --json | jq '.error.candidates'
 
 Session-state nudges:
 
-1. `view dashboard --style agent` can scan `.aops/agentspace/session-state/**`
+1. `view dashboard --style agent` can scan `.aops-cache/agentspace/session-state/**`
    read-only and show a `Session State Nudges` section.
 2. This section does not write memory. It only gives the agent runtime-hygiene
    signals such as "checkpoint overdue" or "write a summary."
@@ -490,7 +495,7 @@ Owner-boundary rules for `view`:
 
 1. Cache-reading view commands (`dashboard`, `boards`, `tasks`, `issues`,
    `feedback`, `memory`, `skills`, `prompts`, `docs`, `digest`, ...) read only
-   `.aops/**/*.md` files from the read-only local cache. They do not call hosted
+   `.aops-cache/**/*.md` files from the read-only local cache. They do not call hosted
    tools, sync, write caches, mutate state, or write to `~/.aops`.
 2. Hosted view commands (`hosted-projects`, `hosted-inventory`) call only these
    hosted read/list tools: `agentspace.project.list-projects`,
@@ -500,10 +505,10 @@ Owner-boundary rules for `view`:
 3. Cross-domain joins follow existing frontmatter/API fields (`subjectType`,
    `subjectId`, `boardId`, `sprintLocalId`, `pmContext.taskId`, and so on);
    they do not invent new domain semantics.
-4. `view skills` and `view prompts` read `.aops/hosted/**` mirror files.
+4. `view skills` and `view prompts` read `.aops-cache/hosted/**` mirror files.
    Canonical truth remains in hosted Agentspace/server state, and view does not
    refresh it.
-5. `view docs` and `view doc-page` read the `.aops/docman/**` mirror. The
+5. `view docs` and `view doc-page` read the `.aops-cache/docman/**` mirror. The
    read-only mirror banner and `pulledAt` appear in the footer.
 6. Projectman planning views read from the cache. Use `view boards`,
    `view tasks`, `view sprints`, `view issues`, and `view feedback` for PM
@@ -526,7 +531,7 @@ Critical rules:
   edits are not canonical and are overwritten during refresh.
 - Derived views are computed from the cache; run `sync pull` to keep it current.
 - Reusable `prompt` and hosted `skill` shell/version truth remains in the
-  server/DB. `sync pull` only creates read-only mirrors under `.aops/hosted/**`.
+  server/DB. `sync pull` only creates read-only mirrors under `.aops-cache/hosted/**`.
 - A repository may intentionally pull another project's hosted prompt/skill
   mirror with `--hosted-project-id|name|slug`.
 - `sync pull` is a project-level server-to-cache refresh. Use
@@ -536,8 +541,8 @@ Startup flow:
 
 1. Run `aops-cli init` for a new repository.
 2. Refresh the read-only hosted-state cache with `aops-cli sync pull --project-slug aops --apply --json`.
-3. Read `.aops/projectman/views/index.md` and `.aops/agentspace/memory/index.md` for cached context.
-4. When reusable prompt/skill context is needed, read `.aops/hosted/index.md`, `.aops/hosted/skills/index.md`, and `.aops/hosted/prompts/index.md`.
+3. Read `.aops-cache/projectman/views/index.md` and `.aops-cache/agentspace/memory/index.md` for cached context.
+4. When reusable prompt/skill context is needed, read `.aops-cache/hosted/index.md`, `.aops-cache/hosted/skills/index.md`, and `.aops-cache/hosted/prompts/index.md`.
 5. Use `aops-cli pm ...` for PM authoring, `aops-cli mem ...` for memory, `aops-cli exp ...` for agent experience, and `aops-cli discuss ...` for the agent discussion workspace. Each writes directly to the hosted server.
 
 Shutdown flow:
@@ -562,16 +567,15 @@ Phase note:
 - Therefore, AOPS sugar retains the existing `pm sprint` + `pm utask` surface
   instead of adding `pm phase ...`.
 
+### 13.3 Private control root and generated cache layout
+
 ## 14 Runner sugar
 
 ### 14.1 Overview
 
 #### 14.1.1 Overview
 
-Runner work uses hosted, schema-discovered execution surfaces; do not assume a
-top-level `aops runner` command exists. Find available tools with
-`aops agent tools --domain runner --summary --json`, read the schema, and obtain
-separate explicit approval for flows with effects.
+Use top-level `aops runner` for status snapshots, event and artifact reads, and guarded `stop`, `resume`, and `reconcile` controls. Control writes require `--preview` or `--apply` and an idempotency key according to live help. For operations not exposed by sugar, discover Tasker-hosted capabilities with `aops agent tools --domain tasker --summary --json` and inspect exact schemas. Runner owns durable execution; CLI and loop are thin delegates, and separate operator approval remains required for effects.
 
 ## 15 Prompt sugar
 
@@ -581,7 +585,7 @@ separate explicit approval for flows with effects.
 
 `aops prompt` manages reusable prompt shells and versions server-first. Use
 `list|get|inspect|current` for reads, `create|update|version create` for writes,
-and `version publish` for publication. `.aops/hosted/prompts/**` is only a
+and `version publish` for publication. `.aops-cache/hosted/prompts/**` is only a
 read-only mirror.
 
 ## 16 Project sugar
@@ -858,7 +862,7 @@ Keep artifact content small and pointer-shaped. If the artifact is a repo file, 
 
 #### 20.1.1 Overview
 
-`aops-cli skill` owns hosted reusable skill shells and skill versions. `.aops/hosted/skills/**` is only the read-only mirror; never edit it as canonical truth.
+`aops-cli skill` owns hosted reusable skill shells and skill versions. `.aops-cache/hosted/skills/**` is only the read-only mirror; never edit it as canonical truth.
 
 Authoring loop:
 
@@ -869,10 +873,9 @@ aops-cli skill version list --skill-id <skill-id> --json
 aops-cli skill version create --hosted-project-slug aops --skill-id <skill-id> --content '@./SKILL.md' --entry-file SKILL.md --skill-standard aops-skill-v1 --meta '@./meta.json' --apply --json
 aops-cli skill version publish --hosted-project-slug aops --id <skill-version-id> --apply --json
 aops-cli sync pull --apply --hosted-project-slug aops --json
-pnpm skills:claude-codex:sync
 ```
 
-When `--version` is omitted, the CLI resolves the next version from hosted versions. If a publish or create reports a version conflict, use `skill version list`; mirror frontmatter can lag by one version immediately after publish.
+When `--version` is omitted, the CLI resolves the next version from hosted versions. If a publish or create reports a version conflict, use `skill version list`; mirror frontmatter can lag by one version immediately after publish. Hosted authoring does not rewrite global runtime skills. Those change only through a separately prepared and installed public asset release.
 
 ## 21 Durable activity logs
 
@@ -943,7 +946,7 @@ aops-cli doc version list --document-id <doc-id> --json
 aops-cli doc outline get --document-version-id <docver-id> --titles-only --depth 2 --json
 aops-cli doc page draft-save --page-version-id <pagever-id> --document-link-id <document-section-link-id> --content '@./page.md' --apply --json
 aops-cli doc set-current-version --document-id <doc-id> --version-id <docver-id> --publish-now --apply --json
-aops-cli doc mirror pull --project-slug aops --group-uid aops-guides --document-slug aops-cli-user-guide --out-dir ./.aops/docman --apply --json
+aops-cli doc mirror pull --project-slug aops --group-uid aops-guides --document-slug aops-cli-user-guide --out-dir ./.aops-cache/docman --apply --json
 ```
 
 For a known page edit, use clone_all + targeted page/section CRUD. For a whole markdown refresh, use `doc import --from-markdown` with `--baseline`, `--guard-target`, and a `--dry-run` first.
@@ -996,15 +999,20 @@ Do not run closeout commands unless the operator explicitly approves closeout. O
 
 #### 26.1.1 Overview
 
-Runtime skills/prompts are loaded from user-level Codex/Claude homes, not directly from repo mirrors. AOPS installs pointer files that re-read `.aops/hosted/**` from the active repo.
+Runtime skills are loaded from the user-level Codex and Claude homes, not from repository mirrors. AOPS installs complete public skill directories from one versioned asset release. It does not install pointer files and runtime use does not depend on an active repository checkout.
 
-Typical refresh:
+Routine use:
 
 ```bash
-aops-cli sync pull --apply --hosted-project-slug aops --json
-aops-cli setup agent-assets --apply --target both --asset both
-pnpm skills:claude-codex:check
+aops assets status --json
+aops assets install --target all --json
+aops assets update --target all --json
+aops assets rollback --target all --json
 ```
+
+`install` and `update` clean-reinstall only the AOPS-managed paths declared by the current and previous manifests. Assets removed from the new manifest are deleted, unrelated user skills remain untouched, and failures restore the prior working files. After the new install succeeds, the retired `~/.aops/agent-assets` store is removed. A symlink or non-directory at that exact legacy path fails before new asset writes.
+
+`~/.aops/assets` stores downloaded releases, current/previous state, and backups. Public releases contain skills, user guides, working disciplines, and roles. The release contract intentionally has no gateway, pointer, receipt, signature, commit identity, or machine identity layer.
 
 After pointer template changes, restart Codex or Claude Code. Hosted content changes usually only need `sync pull`, because the pointer reads the repo mirror at trigger time.
 
@@ -1055,16 +1063,16 @@ Read commands need no guard. Normal writes require `--apply`. Destructive writes
 
 #### 29.1.1 Overview
 
-The hosted server is the source of truth. The `.aops/**` tree is a read-only
+The hosted server is the source of truth. The `.aops-cache/**` tree is a read-only
 local cache; do not treat it as canonical or hand-edit it as truth.
 
 Server-canonical, mirrored as read-only caches:
 
-1. `.aops/projectman/**` caches Projectman boards, tasks, sprints, issues, feedback, and views. Refresh with `aops-cli sync pull --project-slug aops --apply --json`.
-2. `.aops/agentspace/memory/items/**` caches Agentspace memory. Refresh with `aops-cli sync pull ...`.
-3. `.aops/agentspace/discussions/**` caches discuss topics/transcripts (discuss authoring is hosted). Refresh with `aops-cli sync pull ...`.
-4. `.aops/hosted/prompts/**` and `.aops/hosted/skills/**` mirror hosted Agentspace prompt/skill current versions. Refresh with `aops-cli sync pull --apply --hosted-project-slug aops --json`.
-5. `.aops/docman/**` mirrors hosted Docman documents. Refresh with `aops-cli doc mirror pull ...`.
+1. `.aops-cache/projectman/**` caches Projectman boards, tasks, sprints, issues, feedback, and views. Refresh with `aops-cli sync pull --project-slug aops --apply --json`.
+2. `.aops-cache/agentspace/memory/items/**` caches Agentspace memory. Refresh with `aops-cli sync pull ...`.
+3. `.aops-cache/agentspace/discussions/**` caches discuss topics/transcripts (discuss authoring is hosted). Refresh with `aops-cli sync pull ...`.
+4. `.aops-cache/hosted/prompts/**` and `.aops-cache/hosted/skills/**` mirror hosted Agentspace prompt/skill current versions. Refresh with `aops-cli sync pull --apply --hosted-project-slug aops --json`.
+5. `.aops-cache/docman/**` mirrors hosted Docman documents. Refresh with `aops-cli doc mirror pull ...`.
 
 To change content, write through the owner surface (`aops-cli pm ...`, `aops-cli mem ...`, `aops-cli discuss ...`, `aops-cli doc ...`), then refresh the cache.
 
@@ -1077,8 +1085,8 @@ To change content, write through the owner surface (`aops-cli pm ...`, `aops-cli
 Guide mirrors are Docman-owned, not `sync pull`-owned. Refresh AOPS operator guides with:
 
 ```bash
-aops-cli doc mirror pull --project-slug aops --group-uid aops-guides --document-slug aops-cli-user-guide --document-slug aops-agent-assets-bootstrap --out-dir ./.aops/docman --apply --json
-aops-cli doc mirror pull --project-slug aops --group-uid domain-guides --document-slug agentspace-user-guide --out-dir ./.aops/docman --apply --json
+aops-cli doc mirror pull --project-slug aops --group-uid aops-guides --document-slug aops-cli-user-guide --document-slug aops-agent-assets-bootstrap --out-dir ./.aops-cache/docman --apply --json
+aops-cli doc mirror pull --project-slug aops --group-uid domain-guides --document-slug agentspace-user-guide --out-dir ./.aops-cache/docman --apply --json
 ```
 
 Use `sync pull` for hosted prompts/skills, and `doc mirror pull` for guides/documents.
@@ -1094,7 +1102,7 @@ Avoid these:
 1. Guessing flags after a validation error instead of reading `--help`.
 2. Writing raw `agent invoke` payloads without `agent schema`.
 3. Treating `aops-cli` as semantic owner for planning, memory, docs, files, or domain business state.
-4. Hand-editing `.aops/hosted/**` or `.aops/docman/**` mirrors.
+4. Hand-editing `.aops-cache/hosted/**` or `.aops-cache/docman/**` mirrors.
 5. Assuming `sync pull` refreshes Docman guides.
 6. Running full Docman import for a one-page edit when CRUD ids are known.
 7. Writing closeout memory for an ordinary checkpoint.
@@ -1145,22 +1153,20 @@ Use this when a repo needs the standard AOPS task execution or collaborative wor
 
 #### 34.1.1 Overview
 
-Before asking Codex or Claude to use AOPS hosted skills, refresh mirrors and install pointers:
+Install the complete AOPS public asset release before asking Codex or Claude to use its skills:
 
 ```bash
-aops-cli sync pull --apply --hosted-project-slug aops --json
-aops-cli setup agent-assets --apply --target both --asset both
-pnpm skills:claude-codex:check
+aops assets install --target all --json
+aops assets status --json
 ```
 
 Destinations:
 
 1. Codex skills: `~/.codex/skills/<skill>/SKILL.md`
-2. Codex prompts: `~/.codex/prompts/<prompt>.md`
-3. Claude skills: `~/.claude/skills/<skill>/SKILL.md`
-4. Claude commands: `~/.claude/commands/<prompt>.md` when supported by the local Claude Code build.
+2. Claude skills: `~/.claude/skills/<skill>/SKILL.md`
+3. Release store, user guides, disciplines, and roles: `~/.aops/assets/releases/<version>/files/**`
 
-If a pointer triggers but `.aops/hosted/skills/<name>.md` is missing in the active repo, refresh hosted mirrors for the canonical project slug first. If the skill belongs to another domain repo, switch to that repo or pull that hosted project mirror intentionally.
+Use `aops assets update --target all --json` for the latest public GitHub release, or add `--tag <version>` for one exact release. TUI setup/update delegates to these same CLI commands and does not own a second installer.
 
 ## 35 `start` kickoff composer
 
@@ -1329,11 +1335,11 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops api` | Direct domain API escape hatch (/api/{domain}/...) |
 | `aops archive` | AOPS archive bundle commands for hosted Projectman graph cleanup preparation |
 | `aops artifact` | Agentspace artifact sugar commands over the hosted AOPS gateway |
-| `aops assets` | Install and update public AOPS skills from one simple release archive |
+| `aops assets` | Install and update public AOPS skills, guides, disciplines, and roles from one simple release archive |
 | `aops auth` | Authenticate the CLI to a named remote-session target |
 | `aops bootstrap` | Read the host bootstrap contract |
 | `aops chat` | ChatV3 encrypted channels, rooms, agent sessions, coordination, and foreground listening |
-| `aops chatv3` | ChatV3 encrypted channels, rooms, agent sessions, coordination, and foreground listening |
+| `aops chatv3` | Compatibility command tree for canonical `aops chat`. ChatV3 encrypted channels, rooms, agent sessions, coordination, and foreground listening |
 | `aops checkpoint` | Server-first session checkpoint facade over hosted Agentspace memory |
 | `aops cockpit` | Open and independently operate AOPS Cockpit on its own loopback port |
 | `aops codex` | Experimental local agent-runtime integrations for Codex Desktop |
@@ -1348,6 +1354,7 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops host` | Host inventory, registration, diagnostics, and admin commands |
 | `aops init` | Initialize repo-local AOPS Community metadata (.aops) |
 | `aops license` | Inspect the public trusted-local license profile; commercial activation is unavailable |
+| `aops loop` | AOPS loop-engineering facade: dry-run readiness, owner-boundary contract, and foreground-listener contract |
 | `aops mem` (aliases: memory) | Agentspace server-first memory commands (hosted memory-item ops are the source of truth; the local .aops memory tree is never written) |
 | `aops plan` | Sprint-backed Projectman implementation plan commands |
 | `aops playbook` | List reviewed playbooks projected from hosted Agentspace memory rules/constraints (server-first) |
@@ -1355,12 +1362,14 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops project` | Agentspace project sugar commands over the hosted AOPS gateway |
 | `aops prompt` | Agentspace prompt and prompt-version sugar commands over the hosted AOPS gateway |
 | `aops resource` | Agentspace resource sugar commands over the hosted AOPS gateway |
+| `aops runner` | Tasker Loop Runner v2 status and guarded control sugar |
 | `aops server` | Configure and operate a named AOPS Community server instance |
 | `aops setup` | Inspect and bootstrap an AOPS Community installation |
 | `aops skill` | Agentspace skill and skill-version sugar commands over the hosted AOPS gateway |
 | `aops start` | Compose the AOPS Collaborative Startup kickoff prompt from explicit flags |
 | `aops sync` | Server-first sync commands: refresh the read-only local cache of Projectman/Agentspace state plus hosted prompt/skill mirrors |
 | `aops target` | Manage named local or remote AOPS server targets |
+| `aops tasker` | Tasker board, task, and WorkGroup sugar over the hosted AOPS plane |
 | `aops update` | Check, prepare, and apply a guarded global AOPS npm update |
 | `aops version` | Show immutable CLI identity and optional target/runtime context |
 | `aops view` | Read-only AOPS markdown/JSON presentation views |
@@ -1429,10 +1438,10 @@ maintained manually; do not edit the marker blocks below by hand.
 
 | Command | Purpose |
 | --- | --- |
-| `aops assets install` | Install the bundled or selected AOPS skill release |
-| `aops assets rollback` | Restore the previous release into global skill directories |
-| `aops assets status` | Show locally installed AOPS skill release state |
-| `aops assets update` | Update from a local release or the aops-assets GitHub release |
+| `aops assets install` | Clean-install the bundled or selected AOPS asset release while preserving unrelated user assets |
+| `aops assets rollback` | Restore the previous AOPS asset release and projected skills |
+| `aops assets status` | Show locally installed AOPS asset release state |
+| `aops assets update` | Clean-update from a local release or the public AOPS GitHub release |
 
 #### 39.2.11 `aops auth` commands
 
@@ -1483,6 +1492,8 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops chat wake-watch` | EXPERIMENTAL foreground ChatV3-to-local-Codex wake watcher |
 
 #### 39.2.13 `aops chatv3` commands
+
+> Compatibility command tree for canonical `aops chat`. It is retained for existing automation; prefer `aops chat` for new workflows.
 
 | Command | Purpose |
 | --- | --- |
@@ -1584,6 +1595,7 @@ maintained manually; do not edit the marker blocks below by hand.
 | --- | --- |
 | `aops doc answer` | Read a citation-first deterministic answer pack for a saved document version |
 | `aops doc create` | Create a Docman document through the canonical flow surface |
+| `aops doc delete` | Safely delete one Docman document graph after exact title confirmation |
 | `aops doc get` | Get a Docman document by id through the hosted gateway |
 | `aops doc group` | Docman document-group commands |
 | `aops doc group create` | Create a document group |
@@ -1695,7 +1707,30 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops license activate` | Return commercial_profile_required without accepting commercial evidence |
 | `aops license status` | Show the free built-in domain profile |
 
-#### 39.2.24 `aops mem` commands
+#### 39.2.24 `aops loop` commands
+
+| Command | Purpose |
+| --- | --- |
+| `aops loop cleanup` | Inspect stale worker/worktree/artifact cleanup candidates without deleting anything |
+| `aops loop listen` | Show the F4 foreground listener contract; timeout means re-poll |
+| `aops loop maker-run` | Run at most one supervised maker in one approved slice worktree; no nested spawn, merge, or ledger writes |
+| `aops loop models` | List the models each adapter can actually use, or resolve a loose name like "opus 5" to what the adapter calls it |
+| `aops loop pack` | Build an inspectable pre-run loop pack with refs, policy, and role prompts |
+| `aops loop parallel-plan` | Build the F6 parallel/worktree fan-out gate plan without creating worktrees or agents |
+| `aops loop plan` | Build a pass/fail loop readiness and command-contract plan |
+| `aops loop probe` | Probe SDK/CLI adapter readiness without running child agents |
+| `aops loop resume` | Show resume/reconcile contract; never replay guarded writes |
+| `aops loop resume-agent` | Resume a captured Codex or Claude agent session with a new directive; double-gated like start |
+| `aops loop runner-eval` | Evaluate hosted runner/worker v2 boundaries and gaps without hosted mutation |
+| `aops loop session-reconcile` | Show the session lifecycle states, safety brakes, and crash/stale reconcile contract (maps to runner v2 reconcile-state; never replays guarded writes) |
+| `aops loop slice-merge` | Merge one accepted slice branch with ff-only git merge; no child agents or ledger writes |
+| `aops loop start` | Start loop dry-run or one supervised F5 child-agent dogfood run |
+| `aops loop status` | Show stateless F4 loop cockpit with owner refs, cursors, blockers, evidence, and cost/usage actuals |
+| `aops loop stop` | Show stop contract; later runner owner records the actual stop request |
+| `aops loop watch` | Short-lived poll-once/resume-once resume-on-trigger driver; on a qualifying trigger delegates to resume-agent, then exits (no daemon; durable execution belongs to Runner) |
+| `aops loop worktree-init` | Materialize operator-approved isolated worktrees without starting agents or merging |
+
+#### 39.2.25 `aops mem` commands
 
 | Command | Purpose |
 | --- | --- |
@@ -1718,7 +1753,7 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops mem update` | Advanced: update an existing memory item |
 | `aops mem write` | Advanced: write an Agentspace memory item with standardized metadata |
 
-#### 39.2.25 `aops plan` commands
+#### 39.2.26 `aops plan` commands
 
 | Command | Purpose |
 | --- | --- |
@@ -1727,7 +1762,7 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops plan list` | List sprint-backed implementation plans |
 | `aops plan update` | Patch a sprint-backed implementation plan, including phases and microtasks |
 
-#### 39.2.26 `aops playbook` commands
+#### 39.2.27 `aops playbook` commands
 
 | Command | Purpose |
 | --- | --- |
@@ -1737,7 +1772,7 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops playbook promote` | Promote reviewed experience into a playbook memory rule/constraint |
 | `aops playbook show` | Render one hosted playbook as agent-readable markdown |
 
-#### 39.2.27 `aops pm` commands
+#### 39.2.28 `aops pm` commands
 
 | Command | Purpose |
 | --- | --- |
@@ -1806,7 +1841,7 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops pm utask set-status` | Update only the lifecycle status of a sprint-bound utask |
 | `aops pm utask update` | Patch a sprint-bound utask without replacing the full sprint plan |
 
-#### 39.2.28 `aops project` commands
+#### 39.2.29 `aops project` commands
 
 | Command | Purpose |
 | --- | --- |
@@ -1817,10 +1852,10 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops project links` | List repo project registry links |
 | `aops project links list` | List project links from .aops/aops.config.json |
 | `aops project list` | List hosted projects |
-| `aops project migrate-local-root` | Plan or apply flat .aops projectman/agentspace migration into .aops/projects/<slug> |
+| `aops project migrate-local-root` | Plan or apply flat .aops projectman/agentspace migration into .aops-cache/projects/<slug> |
 | `aops project update` | Update a project |
 
-#### 39.2.29 `aops prompt` commands
+#### 39.2.30 `aops prompt` commands
 
 | Command | Purpose |
 | --- | --- |
@@ -1839,7 +1874,7 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops prompt version publish` | Publish a prompt version and sync the prompt current version |
 | `aops prompt version update` | Update an existing prompt version |
 
-#### 39.2.30 `aops resource` commands
+#### 39.2.31 `aops resource` commands
 
 | Command | Purpose |
 | --- | --- |
@@ -1849,7 +1884,20 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops resource list` | List reusable resource shells |
 | `aops resource update` | Update a resource |
 
-#### 39.2.31 `aops server` commands
+#### 39.2.32 `aops runner` commands
+
+| Command | Purpose |
+| --- | --- |
+| `aops runner artifact` | Tasker runner artifact reads |
+| `aops runner artifact list` | List artifact refs for a Tasker runner run |
+| `aops runner event` | Tasker runner event reads |
+| `aops runner event list` | List events for a Tasker runner run |
+| `aops runner reconcile` | Request a guarded Tasker runner reconciliation |
+| `aops runner resume` | Resume a Tasker runner run through the guarded control surface |
+| `aops runner status` | Get a Tasker runner status snapshot |
+| `aops runner stop` | Stop a Tasker runner run through the guarded control surface |
+
+#### 39.2.33 `aops server` commands
 
 | Command | Purpose |
 | --- | --- |
@@ -1871,14 +1919,14 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops server restore` | Restore database data; dispatches on the install profile |
 | `aops server restore db` | Restore only PostgreSQL for one exact native application update |
 | `aops server rollback` | Rollback application code; legacy flat form remains OCI-only until P4 |
-| `aops server rollback app` | Rollback only native application code; never restore or rewind PostgreSQL |
+| `aops server rollback app` | Rollback one native application update; restore its exact pre-migration snapshot when required |
 | `aops server setup` | Configure and start an npm-package, source-checkout, or OCI server profile |
 | `aops server start` (aliases: up) | Start the installed native npm/source host or OCI stack |
 | `aops server status` | Show install and runtime status |
 | `aops server stop` (aliases: down) | Stop the server without deleting data |
 | `aops server update` | Update an installed native application or OCI stack |
 
-#### 39.2.32 `aops setup` commands
+#### 39.2.34 `aops setup` commands
 
 | Command | Purpose |
 | --- | --- |
@@ -1892,7 +1940,7 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops setup init` | Inspect or apply an explicit AOPS installation path |
 | `aops setup server-env` | Create or validate the private PostgreSQL/auth env for the npm server |
 
-#### 39.2.33 `aops skill` commands
+#### 39.2.35 `aops skill` commands
 
 | Command | Purpose |
 | --- | --- |
@@ -1913,7 +1961,7 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops skill version publish` | Publish a skill version and sync the skill current version |
 | `aops skill version update` | Update an existing skill version |
 
-#### 39.2.34 `aops sync` commands
+#### 39.2.36 `aops sync` commands
 
 | Command | Purpose |
 | --- | --- |
@@ -1925,7 +1973,7 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops sync sidecar` | Run a localhost-bound cockpit sidecar that exposes read-only local cache status/diff on the client machine |
 | `aops sync status` | Show local cache sync state |
 
-#### 39.2.35 `aops target` commands
+#### 39.2.37 `aops target` commands
 
 | Command | Purpose |
 | --- | --- |
@@ -1936,7 +1984,25 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops target show` | Run `aops target show --help` for the current command contract. |
 | `aops target use` | Run `aops target use --help` for the current command contract. |
 
-#### 39.2.36 `aops update` commands
+#### 39.2.38 `aops tasker` commands
+
+| Command | Purpose |
+| --- | --- |
+| `aops tasker board` | Tasker kanban-board commands |
+| `aops tasker board create` | Create a Tasker kanban board |
+| `aops tasker board get` | Get a Tasker kanban board by id |
+| `aops tasker board list` | List Tasker kanban boards |
+| `aops tasker board update` | Update a Tasker kanban board |
+| `aops tasker task` | Tasker task commands |
+| `aops tasker task create` | Create a Tasker task |
+| `aops tasker task get` | Get a Tasker task by id |
+| `aops tasker task list` | Search Tasker tasks |
+| `aops tasker task update` | Update a Tasker task |
+| `aops tasker work-group` (aliases: workgroup) | Tasker WorkGroup read commands |
+| `aops tasker work-group get` | Get a Tasker WorkGroup by id |
+| `aops tasker work-group list` | List Tasker WorkGroups |
+
+#### 39.2.39 `aops update` commands
 
 | Command | Purpose |
 | --- | --- |
@@ -1946,12 +2012,12 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops update prepare` | Download and verify exact candidate and rollback tarballs without changing the installation |
 | `aops update recover` | Finish one stranded exact plan at its target closure after a failed apply |
 
-#### 39.2.37 `aops view` commands
+#### 39.2.40 `aops view` commands
 
 | Command | Purpose |
 | --- | --- |
 | `aops view board` | Show a Projectman board with tasks and sprints |
-| `aops view boards` | List Projectman boards from .aops/projectman |
+| `aops view boards` | List Projectman boards from .aops-cache/projectman |
 | `aops view dashboard` | Show repo-first dashboard across local AOPS workspaces |
 | `aops view digest` | Compose a bounded repo-first context pack |
 | `aops view discussion` | Show a discussion topic with turns and outputs |

@@ -1,7 +1,7 @@
 ---
 name: aops-cli-view
-version: 11
-description: "Use when an AI agent needs AOPS CLI presentation/cockpit operator playbook: discovery (read-only local-cache markdown/JSON views + hosted project inventory), selector contract, filter matrix, output controls, and view ownership boundary. Thin discipline guide; canonical mechanics live in .aops/docman/aops-guides/aops-cli-user-guide.md (AOPS markdown view sugar subsection) and command --help."
+version: 12
+description: "Use when an AI agent needs AOPS CLI presentation/cockpit operator playbook: discovery (read-only local-cache markdown/JSON views + hosted project inventory), selector contract, filter matrix, output controls, and view ownership boundary. Thin discipline guide; canonical mechanics live in .aops-cache/docman/aops-guides/aops-cli-user-guide.md (AOPS markdown view sugar subsection) and command --help."
 metadata:
   supersedes: "v10"
   short-description: "AOPS CLI local-cache view / cockpit / presentation guide"
@@ -21,13 +21,13 @@ metadata:
 
 `aops-cli view ...` is a **read-only presentation cockpit**. Most commands are local-cache and read local `.aops/**/*.md` files. Explicit hosted commands (`hosted-projects`, `hosted-inventory`) call hosted list APIs for inspection only. View **never** syncs, refreshes mirrors, writes cache/index files, or runs domain mutations. Default output is agent/TUI compatible markdown; `--json` returns the same read-model as a stable envelope.
 
-This skill is intentionally not a domain skill: presentation is a CLI-internal cockpit concern. **Canonical view content lives in `.aops/docman/aops-guides/aops-cli-user-guide.md`** (AOPS markdown view sugar subsection); skill text is workflow + filter/selector reference.
+This skill is intentionally not a domain skill: presentation is a CLI-internal cockpit concern. **Canonical view content lives in `.aops-cache/docman/aops-guides/aops-cli-user-guide.md`** (AOPS markdown view sugar subsection); skill text is workflow + filter/selector reference.
 
 ## When to use this skill
 
 1. Local-cache dashboards (project cockpit, board, sprint, task, issue, feedback, memory, resume, discussions)
 2. Hosted project inventory inspection (`hosted-projects`, `hosted-inventory`)
-3. Skill/prompt/doc mirror views from `.aops/hosted/**`/`.aops/docman/**`
+3. Skill/prompt/doc mirror views from `.aops-cache/hosted/**`/`.aops-cache/docman/**`
 4. Focused context pack via `digest` (sprint/task/board, depth shallow|deep)
 5. Filter and selector contract for read-only views
 
@@ -44,7 +44,7 @@ This skill is intentionally not a domain skill: presentation is a CLI-internal c
 
 When this skill is silent, ambiguous, or out of date, **defer to these**:
 
-1. `.aops/docman/aops-guides/aops-cli-user-guide.md` — canonical CLI operator guide (includes the "AOPS markdown view sugar" section under "`.aops` local cache and sync").
+1. `.aops-cache/docman/aops-guides/aops-cli-user-guide.md` — canonical CLI operator guide (includes the "AOPS markdown view sugar" section under "`.aops` local cache and sync").
 2. `aops-cli view --help` and nested family help (per subcommand) — flag-level detail.
 3. Section-focused reading on the CLI user guide via the doc discovery ladder:
    ```bash
@@ -148,7 +148,7 @@ aops-cli view hosted-inventory --hosted-project <slug> --scope-resolution explic
 
 1. View is read-only by contract — never mutates, syncs, or refreshes mirrors.
 2. Local-cache view commands read only `.aops/**/*.md`; hosted view commands call only hosted read/list APIs.
-3. View does NOT refresh `.aops/hosted/**` or `.aops/docman/**` mirrors; use `aops-cli sync pull` for hosted prompt/skill mirrors and `aops-cli doc mirror pull` for Docman guide mirrors.
+3. View does NOT refresh `.aops-cache/hosted/**` or `.aops-cache/docman/**` mirrors; use `aops-cli sync pull` for hosted prompt/skill mirrors and `aops-cli doc mirror pull` for Docman guide mirrors.
 4. Use selectors before guessing UUIDs; if a selector is ambiguous, run a list view first to disambiguate.
 5. Filter flags AND together; empty result emits `No matching records.` fallback (intentional, not an error).
 6. Use focused `view digest` over generic `view dashboard` when handing off context to another agent — digest scopes per subject and respects `--depth`.
@@ -161,7 +161,7 @@ Most common failure modes:
 2. **Treating `view dashboard` JSON as canonical state**. It is a composed read-model; canonical state remains per-domain.
 3. **Treating `view hosted-inventory` as sync/bootstrap**. It only reads; hosted prompt/skill mirror update is `sync pull`, while Docman guide mirror update is `doc mirror pull`.
 4. **Bypassing selector errors by guessing UUIDs**. Run a list view first when ambiguous.
-5. **Editing derived view files** (`.aops/projectman/views/index.md`, etc) — they are regenerated after every mutation.
+5. **Editing derived view files** (`.aops-cache/projectman/views/index.md`, etc) — they are regenerated after every mutation.
 6. **Loading `view dashboard` for handoff** instead of focused `view digest --depth shallow|deep`.
 
 ## V2 deferred surfaces
@@ -207,4 +207,4 @@ aops-cli view memory --help
 aops-cli view discussions --help
 ```
 
-If `--help` and this skill disagree, **`--help` wins** (canonical command surface). If `.aops/docman/aops-guides/aops-cli-user-guide.md` and this skill disagree, **user guide wins**.
+If `--help` and this skill disagree, **`--help` wins** (canonical command surface). If `.aops-cache/docman/aops-guides/aops-cli-user-guide.md` and this skill disagree, **user guide wins**.

@@ -55,7 +55,7 @@ aops skill ask --q "<what the agent needs>" --limit 3 --json
    `domain-guides`, document `agentspace-user-guide`, current v20
    `9c805e63-3372-4a8c-a3dc-adfa5d4b8577`.
 2. Targeted read-only mirror:
-   `.aops/docman/domain-guides/agentspace-user-guide.md`.
+   `.aops-cache/docman/domain-guides/agentspace-user-guide.md`.
 3. Public release source:
    `assets/docs/user-guides/agentspace-user-guide.md`.
 4. Exact flags: `aops <family> <command> --help`.

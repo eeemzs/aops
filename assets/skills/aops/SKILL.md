@@ -1,6 +1,6 @@
 ---
 name: aops
-version: 11
+version: 12
 description: "Use when an operator or AI agent needs to discover which AOPS CLI family skill applies — project planning, hosted missions, working disciplines, durable memory, document graph, file snapshots, multi-agent coordination, read-only cockpit views, hosted skill/prompt authoring, agent profiles, or board lifecycle. This skill is a thin router/index over the aops-cli-* skill family and AOPS working-discipline skill; load the matching family skill afterwards. Triggers: 'aops', 'aops-cli', 'AOPS overview', 'which aops skill', 'aops cli surface', 'plan in aops', 'aops mission', 'aops discipline', 'aops memory', 'aops discuss', 'aops chat', 'aops docman', 'aops fileman'."
 metadata:
   supersedes: "v10"
@@ -20,15 +20,15 @@ This skill is a **thin router/index**. It does not carry workflow detail — it 
 
 ### aops-cli-core
 
-The CLI core operator playbook: help-first command discovery, the guard flag conventions (`--preview`, `--apply`, `--confirm`, `--idempotency-key`, `--json`), the canonical operator family map (`init`/`setup`/`auth`/`host`/`agent`/`api`/`sync`/`view`), local cache vs. hosted server routing, and the raw hosted-invoke fallback when sugar is missing. **Load this skill first** when you are unsure about CLI guard semantics, sync mechanics, or how to escape from missing sugar to `agent invoke`. It also carries the canonical Tool-Input-Schema discovery block the other family skills point to. Canonical: `.aops/docman/aops-guides/aops-cli-user-guide.md`.
+The CLI core operator playbook: help-first command discovery, the guard flag conventions (`--preview`, `--apply`, `--confirm`, `--idempotency-key`, `--json`), the canonical operator family map (`init`/`setup`/`auth`/`host`/`agent`/`api`/`sync`/`view`), local cache vs. hosted server routing, and the raw hosted-invoke fallback when sugar is missing. **Load this skill first** when you are unsure about CLI guard semantics, sync mechanics, or how to escape from missing sugar to `agent invoke`. It also carries the canonical Tool-Input-Schema discovery block the other family skills point to. Canonical: `.aops-cache/docman/aops-guides/aops-cli-user-guide.md`.
 
 ### aops-cli-discuss
 
-Standalone decision / consensus: `discuss` durable decision topics, the design-decision ritual (independent research → ≥4 substantive turns → `kind=final-stance` per agent), the two-agent turn protocol, and deterministic `conclude` outputs. There is **no automatic decision bridge** — surfacing a decision to PM or chat is explicit. **Load this skill** when running a server-canonical design decision or peer consensus before implementation. Canonical: `.aops/docman/domain-guides/agentspace-user-guide.md` (Coordination semantics + Anti-patterns appendix + Troubleshooting sections).
+Standalone decision / consensus: `discuss` durable decision topics, the design-decision ritual (independent research → ≥4 substantive turns → `kind=final-stance` per agent), the two-agent turn protocol, and deterministic `conclude` outputs. There is **no automatic decision bridge** — surfacing a decision to PM or chat is explicit. **Load this skill** when running a server-canonical design decision or peer consensus before implementation. Canonical: `.aops-cache/docman/domain-guides/agentspace-user-guide.md` (Coordination semantics + Anti-patterns appendix + Troubleshooting sections).
 
 ### aops-cli-chat
 
-Coordination / wake: hosted Agentspace rooms and DMs, members and roleKey vocabulary, reference bindings, messages, and `inbox`/`listen`/`catchup` read cursors. Rooms are FLOW (coordination + wake), not the decision ledger. **Load this skill** when coordinating peers, posting a review-request wake, or running a catch-up loop. Canonical: `.aops/docman/domain-guides/agentspace-user-guide.md` (Coordination semantics). For review-request/result, re-review, and operator-approved closeout truth, use `aops-cli-projectman`.
+Coordination / wake: hosted Agentspace rooms and DMs, members and roleKey vocabulary, reference bindings, messages, and `inbox`/`listen`/`catchup` read cursors. Rooms are FLOW (coordination + wake), not the decision ledger. **Load this skill** when coordinating peers, posting a review-request wake, or running a catch-up loop. Canonical: `.aops-cache/docman/domain-guides/agentspace-user-guide.md` (Coordination semantics). For review-request/result, re-review, and operator-approved closeout truth, use `aops-cli-projectman`.
 
 ### aops-cli-projectman
 
@@ -44,7 +44,7 @@ AOPS execution discipline routing: solo-pm-loop, build-review-chat, and design-f
 
 ### aops-cli-agentspace
 
-Agentspace context and reusable assets: durable memory (`mem write/list/update/synopsis/resume/compact/prune/search`), sticky guidance, generated synopsis, experience capture (`exp`), the hosted asset families (`project`/`prompt`/`resource`/`artifact`/`skill`), agent profile metadata, and the activity log read surface. **Load this skill** when writing kickoff/resume/checkpoint memory, operator-approved closeout memory, authoring sticky bootstrap rules, publishing prompt or skill versions, or composing agent profiles for collab `--profile-mount`. Canonical: `.aops/docman/domain-guides/agentspace-user-guide.md` (Entity model + Memory model + Useful commands sections).
+Agentspace context and reusable assets: durable memory (`mem write/list/update/synopsis/resume/compact/prune/search`), sticky guidance, generated synopsis, experience capture (`exp`), the hosted asset families (`project`/`prompt`/`resource`/`artifact`/`skill`), agent profile metadata, and the activity log read surface. **Load this skill** when writing kickoff/resume/checkpoint memory, operator-approved closeout memory, authoring sticky bootstrap rules, publishing prompt or skill versions, or composing agent profiles for collab `--profile-mount`. Canonical: `.aops-cache/docman/domain-guides/agentspace-user-guide.md` (Entity model + Memory model + Useful commands sections).
 
 ### aops-cli-docman
 
@@ -60,7 +60,7 @@ Insan-first task manager + scenario-first runner: `tasker` (task list/get/create
 
 ### aops-cli-view
 
-Read-only local-cache cockpit and hosted-inventory presentation: `view dashboard`, focused subject views (`view sprint/task/board`), Agentspace context views (`view memory/resume/discussions`), Docman/skill/prompt mirror views, hosted project inventory (`view hosted-projects/hosted-inventory`), and `view digest --depth shallow|deep` for handoff context packs. **Load this skill** when you need to inspect repo or hosted state without mutating it; view never syncs, refreshes, or mutates. Canonical: `.aops/docman/aops-guides/aops-cli-user-guide.md` (AOPS markdown view sugar section).
+Read-only local-cache cockpit and hosted-inventory presentation: `view dashboard`, focused subject views (`view sprint/task/board`), Agentspace context views (`view memory/resume/discussions`), Docman/skill/prompt mirror views, hosted project inventory (`view hosted-projects/hosted-inventory`), and `view digest --depth shallow|deep` for handoff context packs. **Load this skill** when you need to inspect repo or hosted state without mutating it; view never syncs, refreshes, or mutates. Canonical: `.aops-cache/docman/aops-guides/aops-cli-user-guide.md` (AOPS markdown view sugar section).
 
 ### aops-cli-board-lifecycle (deprecated pointer)
 
@@ -84,9 +84,9 @@ Compatibility index for the modular AOPS CLI skill family after the v33 split. R
 ## Server-canonical and local cache
 
 - Server-canonical truth: the hosted AOPS server is the source of truth for planning (`projectman`), durable memory (`agentspace.memory-item`), discussion topics (`agentspace.discussion-topic`), and experience. Create, write, and read these through the hosted `aops-cli` surface (`pm`, `mem`, `discuss`, `exp`).
-- Local cache: `.aops/projectman/**`, `.aops/agentspace/memory/items/**`, `.aops/agentspace/discussions/**`, and `.aops/agentspace/collabs/**` are a read-only local cache of server state, refreshed by `sync pull`. Do not treat them as an authoring source or planning truth.
-- Hosted prompt/skill mirrors: `.aops/hosted/prompts/**` and `.aops/hosted/skills/**`; refresh with `aops-cli sync pull --apply --hosted-project-slug aops --json`.
-- Hosted Docman guide mirrors: `.aops/docman/**`; refresh separately with `aops-cli doc mirror pull --project-slug aops --document-slug <slug> --out-dir ./.aops/docman --apply --json`. `sync pull` does not refresh `.aops/docman/**`.
+- Local cache: `.aops-cache/projectman/**`, `.aops-cache/agentspace/memory/items/**`, `.aops-cache/agentspace/discussions/**`, and `.aops-cache/agentspace/collabs/**` are a read-only local cache of server state, refreshed by `sync pull`. Do not treat them as an authoring source or planning truth.
+- Hosted prompt/skill mirrors: `.aops-cache/hosted/prompts/**` and `.aops-cache/hosted/skills/**`; refresh with `aops-cli sync pull --apply --hosted-project-slug aops --json`.
+- Hosted Docman guide mirrors: `.aops-cache/docman/**`; refresh separately with `aops-cli doc mirror pull --project-slug aops --document-slug <slug> --out-dir ./.aops-cache/docman --apply --json`. `sync pull` does not refresh `.aops-cache/docman/**`.
 - Never hand-edit a mirror or cache as canonical truth. Change hosted truth via the hosted CLI (`aops-cli pm|mem|discuss|prompt|skill|doc ...`) and refresh the matching mirror.
 - `--yes` is non-interactive/fail-fast mode for supported commands; do not treat it as a proven fix for an abort unless logs prove that.
 

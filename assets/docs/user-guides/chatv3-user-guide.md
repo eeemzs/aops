@@ -1,6 +1,6 @@
 # ChatV3 User Guide
 
-_Release Notes:_ Applies the Opus final-review corrections for invocation flags, post-processing receipts, gap detection, latestSeq/caughtUp semantics, and wake-watch prerequisites.
+_Release Notes:_ Uses the private ignored .aops-cache/docman mirror path; no operational behavior changes.
 
 ## 1 Agent fast path
 
@@ -427,7 +427,7 @@ aops doc mirror pull --project-slug aops --document-slug chatv3-user-guide \
   --apply --json
 ```
 
-Repository mirrors under `.aops/docman/**` are read-only caches. Never
+Repository mirrors under `.aops-cache/docman/**` are read-only caches. Never
 hand-edit them as canonical truth.
 
 ## 11 Appendices

@@ -1,9 +1,9 @@
 ---
 name: aops-interactive
-version: 3
-description: "Interactive AOPS router. Asks the operator what they want, then routes to the matching AOPS skill (loop orchestration, discuss/chat coordination, project management, ...) for detailed work, or does a small job itself (global skill/pointer sync) when there is no dedicated target. Extensible."
+version: 4
+description: "Interactive AOPS router. Asks the operator what they want, routes to the matching AOPS skill, or runs the simple aops assets lifecycle when global AOPS assets are requested."
 metadata:
-  supersedes: "v2"
+  supersedes: "v3"
   short-description: "Interactive AOPS router skill"
   tags:
     - aops
@@ -13,58 +13,42 @@ metadata:
     - discuss
     - chat
     - projectman
-    - global-sync
-    - multi-agent
+    - assets
 ---
 
 # AOPS Interactive
 
-A single interactive entry point for AOPS work. **Ask the operator what they want, then route to the matching AOPS skill** for the detailed mechanics, or do a small job inline when there is no dedicated target. Keep this skill thin: it gathers intent and hands off; it does not duplicate the target skills' mechanics.
+Ask the operator what they want, then route to the smallest matching AOPS skill. Keep this router thin and do not duplicate target-skill mechanics.
 
-## Step 1 - Ask what they want
+## Choose a route
 
-Ask via the runtime's question UI: "What do you want to do?"
+- **Loop orchestration**: load `aops-loop-interactive`.
+- **Decision or consensus**: load `aops-cli-discuss`.
+- **Coordination or wake**: load `aops-cli-chat`.
+- **Boards, sprints, tasks, issues, or reviews**: load `aops-cli-projectman`.
+- **Tasker or Runner operation**: load `aops-cli-tasker`.
+- **Documents**: load `aops-cli-docman`.
+- **Global AOPS assets**: use the simple inline lifecycle below.
 
-- **Loop orchestration** - interactive `aops-cli loop` readiness, pack, supervised run handoff, foreground listening, and v1 closeout
-- **Collaborate** - discuss topic (decision/consensus) and/or hosted chat room (coordination/wake)
-- **Project management** - boards, sprints, tasks
-- **Sync global skills/prompts** - Codex / Claude pointers (set, or delete + re-set)
-- (more routes added over time)
+Roles remain operator-assigned. Do not automatically create a reviewer, room, sprint, or real loop run.
 
-Then branch:
+## Global AOPS assets
 
-## A. Loop orchestration -> route to `aops-loop-interactive`
+There is one installer for CLI, setup, and TUI:
 
-Gather: PM task/sprint refs, reviewer/review-request refs, run scope, budget, tool/env policy, and permission policy. Ask whether this is dry-run only, supervised single-child, or an explicitly approved real run. Real run approval remains a double gate in the dedicated skill.
+```bash
+aops assets status --json
+aops assets install --target all --json
+aops assets update --target all --json
+aops assets rollback --target all --json
+```
 
-Then **load the `aops-loop-interactive` skill** and follow it. It owns the operator-facing loop playbook for `aops-cli loop plan|pack|start|listen|status`, owner-boundary reminders, supervised-run double-gate discipline, foreground listener behavior, and F6 v2 deferral. Do not duplicate those mechanics here.
+`install` and `update` clean-reinstall AOPS-managed paths, remove assets retired by the new manifest, and preserve unrelated user skills. The former `~/.aops/agent-assets` store is removed after a successful new install. Do not delete whole Codex or Claude skill roots.
 
-## B. Collaborate -> route to `aops-cli-discuss` / `aops-cli-chat` / `aops-cli-projectman`
+Use `aops assets update --tag <version> --target all --json` for one exact public release. Use `--from-release <directory>` only for a reviewed local/disposable release.
 
-Gather: implementer agent? reviewer agent? a discuss topic first (design decision/consensus) or straight to coordination? live (hosted chat room) or async (PM review-request)? Roles are operator-assigned - never auto-assign.
-
-Then **load the matching skill**: `aops-cli-discuss` for the decision/consensus ritual and `conclude` outputs; `aops-cli-chat` for hosted-room coordination/wake and listen/catchup loops; `aops-cli-projectman` for review-request/result, re-review, and operator-approved closeout. The repo-first `collab` surface is retired - there is no single collab skill; pick the surface that matches the need. Do not duplicate their mechanics here.
-
-## C. Project management -> route to `aops-cli-projectman`
-
-Gather: open a **new board** or use an **existing** one? List existing boards and let the operator select or add a new one. Proceed **sprint-based**, **task-based**, or **board + sprint**?
-
-Then **load the `aops-cli-projectman` skill** and follow its workflow for the chosen shape. It owns board/sprint/task/issue mechanics.
-
-## D. Sync global skills/prompts (inline - Codex & Claude)
-
-This skill does this itself; no separate prompt is needed.
-
-- **Set / update** global pointers:
-  ```bash
-  aops-cli sync pull --apply --hosted-project-slug aops --json
-  pnpm skills:claude-codex:sync
-  pnpm skills:claude-codex:check
-  ```
-- **Delete + re-set** after a hosted asset was removed. Sync does **not** auto-prune: remove the stale global pointer for the deleted asset, then re-run sync + check.
-
-Targets: `~/.codex/skills`, `~/.codex/prompts`, `~/.claude/skills`, `~/.claude/commands`. Claude support varies by build and is best-effort.
+Global installation is an operator effect. Asking to author or refresh hosted skills does not authorize it.
 
 ## Principle
 
-If a dedicated AOPS skill exists for the task, route to it: gather inputs, then load and follow it. If not, do the small job inline, step by step. Add new routes here as new needs appear.
+If a dedicated AOPS skill exists, gather the minimum inputs and follow it. Otherwise do the small job inline using live `--help`. Never revive the retired repo-pointer/global-sync system.

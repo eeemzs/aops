@@ -1,6 +1,6 @@
 ---
 name: aops-cli-operator-brief
-version: 3
+version: 4
 description: "Use when an AI agent needs to summarize AOPS PM, memory, discussion, or collab history in plain non-technical language for an operator asking what happened, what works, what was decided, or what remains open."
 metadata:
   prompt-ref: "prompt:aops-operator-status-brief"
@@ -37,7 +37,7 @@ The canonical reusable prompt is `prompt:aops-operator-status-brief`. Use that p
    - kickoff
 4. Read session records only after PM/memory gives the right ids:
    - `aops-cli discuss get <id> --json`
-   - Historical collab session records, if any, are read-only files under `.aops/agentspace/collabs/**` (the `aops-cli collab get` command is retired — read the files directly).
+   - Historical collab session records, if any, are read-only files under `.aops-cache/agentspace/collabs/**` (the `aops-cli collab get` command is retired — read the files directly).
 5. Read review issues, feedback, commit summaries, logs, or browser proof only when they answer the operator's exact question.
 
 ## Briefing Discipline
