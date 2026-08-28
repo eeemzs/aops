@@ -1,9 +1,9 @@
 ---
 name: aops-bootstrapper-authoring
-version: 7
+version: 10
 description: "Use when an AI agent creates or updates canonical AOPS hosted skills/prompts and prepares the simple four-kind public asset release through ignored .aops-cache mirrors and documented pnpm scripts."
 metadata:
-  supersedes: "v6"
+  supersedes: "v9"
   short-description: "AOPS hosted authoring and simple public asset preparation"
   tags:
     - aops
@@ -21,7 +21,7 @@ Use this skill for canonical AOPS hosted prompt/skill authoring and for preparin
 
 1. Hosted skill and prompt truth lives in the canonical AOPS server under `slug:aops`.
 2. `.aops-cache/hosted/**` and `.aops-cache/docman/**` are ignored read-only mirrors. Never hand-edit them as truth.
-3. `release/public-aops-assets-inventory.json` is the tracked allowlist and immutable-version pin set for public export.
+3. `release/public-aops-assets-inventory.json` is the tracked allowlist and immutable-version pin set; canonical public classification is the independent second export gate.
 4. The public release may contain only skills, user guides, working disciplines, and roles.
 5. Global Codex/Claude installation is performed by `aops assets`; it is not part of hosted authoring or mirror refresh.
 
@@ -48,14 +48,16 @@ Then:
 6. Refresh the ignored hosted mirror:
 
    ```bash
-   aops sync pull --apply --hosted-project-slug aops --json
+   aops sync pull --only hosted-skills --apply --hosted-project-slug aops --json
    ```
 
 Do not patch mirror Markdown or globally installed skills to simulate a canonical update.
 
 ## Public asset preparation
 
-Refresh required Docman mirrors into `.aops-cache/docman`, then preview current version-pin and target drift:
+Public export is opt-in and fail-closed. An exact inventory row is necessary but not sufficient: a skill shell also needs `public-agent-asset` and `public-distribution`; a user guide must be published/public, live in `aops-guides` or `domain-guides`, and carry `user-guide`, `public-asset`, and `public-distribution`. Metadata never auto-adds an item to inventory, and inventory cannot override missing/private classification.
+
+Refresh only required hosted-skill and Docman mirror partitions into `.aops-cache`, then preview current version-pin and target drift:
 
 ```bash
 pnpm run release:aops-assets:sync -- \
@@ -92,7 +94,7 @@ Build twice and require byte-identical `release.json` and `aops-assets.json.gz`.
 
 Require:
 
-- expected four-kind counts and no unexpected files;
+- exact inventory membership, canonical public classification, expected four-kind counts, and no unexpected files;
 - no maintainer-only skill, credential, machine-local path, symlink, or unsupported path;
 - disposable-HOME install, repair, update, status, and rollback;
 - removal of an asset retired by the new manifest;
