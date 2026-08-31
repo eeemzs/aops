@@ -53,26 +53,33 @@ update server state.
 
 #### 3.1.1 Overview
 
-```bash
-aops-cli init
-aops-cli setup server-env --auth-provider trusted-local
-pnpm --filter @aops/aops-server run dev:prepare
-pnpm --filter @aops/aops-server run dev
-aops-cli host health
+Install one package and open the terminal setup tool:
+
+```sh
+npm install --global @aopslabs/aops
+aops
 ```
 
-### 3.2 Interactive auth
+The exact Server dependency is included; do not install it separately. The TUI is one System Check page. Configure the existing PostgreSQL connection and TLS privately, Test and save, then use the affected row Fix action for aops setup/migrations. The Server URL defaults to `http://127.0.0.1:5900`.
+
+PostgreSQL must already exist; aops does not install, provision, start, stop, remove or administer its service, databases or roles. SQLite is visible but unavailable. Setup owns only aops migrations. Secrets never belong in chat, argv or logs.
+
+Assets and CLI each offer Check/Update; internal prepare/apply is hidden. F3 opens sanitized commands/results. Updates may take 5–10 minutes; do not close the app. After verified update, acknowledge and run `aops` again. Minimum terminal is 96x30.
+
+### 3.2 Existing Server
 
 #### 3.2.1 Overview
 
-```bash
-aops-cli init
-aops-cli setup server-env --auth-provider interactive auth
-pnpm --filter @aops/aops-server run dev:prepare
-pnpm --filter @aops/aops-server run dev
-aops-cli setup first-admin
-aops-cli auth login
+Configure an existing Server URL in the TUI, or use the headless target commands after reading their help:
+
+```sh
+aops target add --name remote --api-base-url https://aops.example.com --auth-provider remote-session --tls-policy system-ca --apply
+aops target use remote --apply
+aops auth login --target remote
+aops target doctor remote --json
 ```
+
+Remote identity uses the Server's browser-approved device flow. Community local access remains loopback-only trusted-local. An existing remote Server selection takes priority over an inferred local installation; it does not operate a local database or local services.
 
 ## 4 `init`
 
@@ -91,21 +98,17 @@ guards before applying it.
 
 #### 5.1.1 Overview
 
-`aops setup server-env` creates or validates the dedicated PostgreSQL and
-authentication environment for the npm-based AOPS Server. Never copy secret
-values into command output or documentation. When connection verification is
-needed, use the test and TLS options documented by live `--help`.
+`aops setup server-env` saves private configuration for an existing PostgreSQL connection; it does not create PostgreSQL databases or roles. Prefer the TUI Database Configure dialog for private input. Headless input uses documented environment/private files; read `--help`.
 
-## 6 `setup first-admin`
+The saved TLS policy is `require`, `verify-full`, or explicit unencrypted `disable`. Test and save verifies it first. Fresh `aops setup init --yes --json` discovers a saved connection even before a local installation exists. That command is read-only unless explicitly applied. Never echo secret configuration.
+
+## 6 Local and remote access
 
 ### 6.1 Overview
 
 #### 6.1.1 Overview
 
-This heading is a compatibility note retained from the old interactive-auth
-flow. The current CLI has no `aops setup first-admin` command. Trusted-local
-setup does not require a first-admin step. For remote interactive targets, use
-`aops auth login` and the live AuthV2 tool contract.
+Local Community setup uses trusted-local on loopback and does not ask for a first administrator. Existing Server authentication is configured on the selected remote service; use `aops auth login --target <name>` and target/auth readback. Do not attempt local identity bootstrap or database administration as a setup repair.
 
 ## 7 User management
 
@@ -113,11 +116,7 @@ setup does not require a first-admin step. For remote interactive targets, use
 
 #### 7.1.1 Overview
 
-The current public CLI has no generic `aops user` sugar family. Do not guess a
-command name for user or identity operations. First run `aops agent tools
---domain authv2 --summary --json`, then inspect the selected tool with
-`aops agent schema`. Deletions, role changes, and access changes also require
-explicit operator approval.
+The public CLI has no generic `aops user` family. Local Community is trusted-local; user/role administration belongs to the selected identity-owning remote service, not a local setup step. Use `aops auth --help` for login/session actions and live discovery for capabilities actually exposed by that service. Access changes require explicit authority.
 
 ## 8 Login and tokens
 
@@ -1438,10 +1437,10 @@ maintained manually; do not edit the marker blocks below by hand.
 
 | Command | Purpose |
 | --- | --- |
-| `aops assets install` | Clean-install the bundled or selected AOPS asset release while preserving unrelated user assets |
+| `aops assets install` | Install the bundled or selected AOPS asset release |
 | `aops assets rollback` | Restore the previous AOPS asset release and projected skills |
 | `aops assets status` | Show locally installed AOPS asset release state |
-| `aops assets update` | Clean-update from a local release or the public AOPS GitHub release |
+| `aops assets update` | Update from a local release or the public AOPS GitHub release |
 
 #### 39.2.11 `aops auth` commands
 
@@ -1711,9 +1710,9 @@ maintained manually; do not edit the marker blocks below by hand.
 
 | Command | Purpose |
 | --- | --- |
-| `aops loop cleanup` | Inspect stale worker/worktree/artifact cleanup candidates without deleting anything |
+| `aops loop cleanup` | Preview worktree age/eligibility; remove only exact terminal, clean, merged/abandoned targets with --apply --confirm |
 | `aops loop listen` | Show the F4 foreground listener contract; timeout means re-poll |
-| `aops loop maker-run` | Run at most one supervised maker in one approved slice worktree; no nested spawn, merge, or ledger writes |
+| `aops loop maker-run` | Run at most one supervised maker in one approved slice worktree; hosted mode uses one atomic Runner lease |
 | `aops loop models` | List the models each adapter can actually use, or resolve a loose name like "opus 5" to what the adapter calls it |
 | `aops loop pack` | Build an inspectable pre-run loop pack with refs, policy, and role prompts |
 | `aops loop parallel-plan` | Build the F6 parallel/worktree fan-out gate plan without creating worktrees or agents |
@@ -1896,6 +1895,9 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops runner resume` | Resume a Tasker runner run through the guarded control surface |
 | `aops runner status` | Get a Tasker runner status snapshot |
 | `aops runner stop` | Stop a Tasker runner run through the guarded control surface |
+| `aops runner worker` | Tasker runner atomic worker lease operations |
+| `aops runner worker claim` | Atomically claim the next ready slice, or one explicit ready slice with --slice-id |
+| `aops runner worker release` | Atomically release, cancel, or fail one worker lease |
 
 #### 39.2.33 `aops server` commands
 
@@ -1911,20 +1913,18 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops server migration-plan` | Read the exact pending native database migration plan without mutation |
 | `aops server operation-status` | Inspect one exact durable operation journal without changing it |
 | `aops server reconcile-operation` | Reconcile one exact interrupted operation under its instance lock |
-| `aops server reconcile-recovery` | Explicitly finish or abandon one exact hard-killed recovery attempt |
-| `aops server recover` | Recover one exact failed or unhealthy update from its verified backup |
 | `aops server recover-lock` | Recover one exact stale lock generation proven dead or PID-reused |
-| `aops server reset` | Remove local installation state; managed PostgreSQL is deleted only when explicitly requested |
+| `aops server reset` | Remove local installation state without deleting PostgreSQL resources |
 | `aops server restart` | Restart the installed server |
 | `aops server restore` | Restore database data; dispatches on the install profile |
 | `aops server restore db` | Restore only PostgreSQL for one exact native application update |
-| `aops server rollback` | Rollback application code; legacy flat form remains OCI-only until P4 |
+| `aops server rollback` | Rollback one native application update |
 | `aops server rollback app` | Rollback one native application update; restore its exact pre-migration snapshot when required |
-| `aops server setup` | Configure and start an npm-package, source-checkout, or OCI server profile |
-| `aops server start` (aliases: up) | Start the installed native npm/source host or OCI stack |
+| `aops server setup` | Configure and start the local npm Server with a PostgreSQL connection |
+| `aops server start` (aliases: up) | Start the installed local npm/source Server |
 | `aops server status` | Show install and runtime status |
 | `aops server stop` (aliases: down) | Stop the server without deleting data |
-| `aops server update` | Update an installed native application or OCI stack |
+| `aops server update` | Update the installed local npm/source Server |
 
 #### 39.2.34 `aops setup` commands
 
@@ -1935,7 +1935,6 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops setup catalog reconcile` | Preview or apply an append-only reconcile from one verified Community release |
 | `aops setup catalog rollback` | Restore a prior reserved current-version map without deleting history |
 | `aops setup catalog status` | Inspect only the reserved official catalog scope |
-| `aops setup docker` | Preview or apply the recommended Docker-hosted AOPS Server setup |
 | `aops setup guide` | Print the packaged agent-readable AOPS installation skill |
 | `aops setup init` | Inspect or apply an explicit AOPS installation path |
 | `aops setup server-env` | Create or validate the private PostgreSQL/auth env for the npm server |
