@@ -126,11 +126,19 @@ Use a CLI whose `aops db backup --help` includes `--portable`; a published guide
 
 `aops db list` and `aops db which` report eligible local backups for the selected backend. Portable bundles are ineligible for SQLite. List eligibility verifies bytes/contract; target schema and stopped ownership are checked again on restore. Prefer an explicit path for transfer, not a guessed newest backup.
 
-Undo uses the same command on the same compatible PostgreSQL target: stop its aops services and run `aops db restore --backup <undo.bundleDirectory> --confirm-data-rewind --json`. A new verified undo is still mandatory; `--no-pre-restore-backup` and `--confirm-no-undo` cannot bypass it for portable/owned-set restore. Native PostgreSQL dumps keep their existing native restore path.
+Undo uses the same command on the same compatible PostgreSQL target: stop its aops services and run `aops db restore --backup <undo.bundleDirectory> --confirm-data-rewind --json`. A new verified undo is always mandatory; there is no skip-undo option. PostgreSQL now uses a first-party owned-set bundle. Older dump files are preserved but not accepted by db restore or server restore; latest selection skips them.
 
 Missing/incompatible schema, invalid JSON/types, UUID case-twin uniqueness conflicts and hard foreign-key orphans are rejected before replacement. Existing weak orphans are preserved and counted. On failure, read the safe error and recovery result: `targetState: unchanged` means no committed replacement; `unknown` (for example a lost COMMIT acknowledgement) is not success or a proven rollback. Keep services stopped and inspect/recover with the reported verified undo rather than blindly repeating the command.
 
 No PostgreSQL portable export, PostgreSQL → SQLite transfer, append/upsert, selected-project import or automatic backend switch is available. Backup/restore remains CLI-only; the one-page TUI is unchanged.
+
+### PostgreSQL backup and restore
+
+Run `aops db backup --json` on the Server machine. Keep the returned backup directory and its `receiptPath` together. The selected Server reads all aops-owned data directly; no separate PostgreSQL client executables are needed. Use a CLI whose help describes a first-party PostgreSQL bundle; this guide does not add that support to an older installed binary.
+
+To restore, stop aops Cockpit and Server, then run `aops db restore --backup <backup-directory> --confirm-data-rewind --json`. The target must already have the current compatible aops schema and the same PostgreSQL major as the backup. All aops data is replaced, not merged. A verified undo is taken first; unrelated tables are preserved. Verify the result before explicitly restarting services. `aops server restore` follows the same rules.
+
+Ordinary restore does not downgrade migrations. Recovery for an interrupted application update is a separate exact-update operation; follow its diagnostic and `aops server restore db --help`. Do not substitute a normal restore or repeat an uncertain operation blindly. The legacy `host database dump` command family is a separate explicit administration tool, not the aops backup method or an automatic fallback.
 
 ## 6 Local and remote access
 
@@ -1602,9 +1610,9 @@ maintained manually; do not edit the marker blocks below by hand.
 
 | Command | Purpose |
 | --- | --- |
-| `aops db backup` | Take and verify one full backup (PostgreSQL dump or consistent online SQLite snapshot) |
+| `aops db backup` | Take and verify all aops data (first-party PostgreSQL bundle or consistent online SQLite snapshot) |
 | `aops db list` | List backups and say which ones a restore will accept |
-| `aops db restore` | Restore a native backup or SQLite portable bundle into PostgreSQL. Stop Server/Cockpit first for SQLite/portable restore; undo backup is mandatory. |
+| `aops db restore` | Restore a first-party PostgreSQL bundle or SQLite backup. Stop Server/Cockpit first; undo backup is mandatory. |
 | `aops db which` | Print the backup that --latest would choose, without restoring |
 
 #### 39.2.18 `aops discuss` commands
@@ -1942,7 +1950,7 @@ maintained manually; do not edit the marker blocks below by hand.
 | Command | Purpose |
 | --- | --- |
 | `aops server attest-external-snapshot` | Optionally record an operator-owned external PostgreSQL snapshot for one risky migration plan |
-| `aops server backup` | Create and verify a PostgreSQL dump or consistent online SQLite snapshot for the installed database |
+| `aops server backup` | Create and verify all aops data as a first-party PostgreSQL bundle or consistent SQLite snapshot |
 | `aops server backup list` | List existing backups and say which ones restore will accept |
 | `aops server backup-readiness` | Report whether this host can take the backup an update depends on, without mutation |
 | `aops server health` | Check the installed server health without mutation |
