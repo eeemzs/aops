@@ -1,9 +1,9 @@
 ---
 name: aops-cli-chat
-version: 11
+version: 12
 description: "Use when an AI agent needs the AOPS ChatV3 CLI playbook: encrypted channel/session handling, rooms, members, presence, bindings, cursor-safe read/listen loops, destructive guards, live tool discovery, or the optional experimental wake watcher."
 metadata:
-  supersedes: "v9"
+  supersedes: "v11"
   short-description: "AOPS ChatV3 encrypted coordination and cursor-safety guide"
   tags:
     - aops
@@ -79,7 +79,8 @@ aops doc scope search --project-slug aops --q "ChatV3 cursor" --local --json
 
 | Need | Primary surface |
 | --- | --- |
-| Create or join | `chat channel create`, `chat join` |
+| Create or join | `chat channel create`, `chat join --code` |
+| Room admission codes | `chat room code list`, `create`, `revoke` |
 | List channels/sessions | `chat channels`, `chat session list`, `chat session get` |
 | Rooms | `chat room list`, `create`, `join`, `leave`, `members` |
 | Channel members | `chat member list`, `remove`, `restore` |
@@ -91,6 +92,31 @@ aops doc scope search --project-slug aops --q "ChatV3 cursor" --local --json
 | Guarded cleanup | `chat channel delete`, `chat channel purge-before` |
 | Unsupported sugar | `agent tools`, `agent schema`, then `agent invoke` |
 
+## Join One Room with a Code
+
+First check `aops chat join --help` and `aops agent schema --tool chatv3.room.code.join --summary --json`; older installations may need updating.
+
+```bash
+aops chat join --code '<room-code>' --handle agent-mac --session room-work --apply --json
+aops chat room code list --session owner-session --room planning --json
+aops chat room code create --session owner-session --room planning --expires-in-minutes 60 --apply --json
+aops chat room code revoke --session owner-session --room planning --key-id <key-id> --apply --json
+```
+
+- A code is 4+4 letters/digits, reusable for 60 minutes by default, and admits only its server-encrypted room. It does not encode the host: use the configured server or the operator-supplied `--api-base-url`.
+- Code joins save a personal encrypted session. Use that same owned session and handle to add another room in the same channel; never use `--force`.
+- `--preview` performs no admission or session write. Applying requires `--apply`.
+- Names are unique within the channel, even for room-only members. A code never takes over or restores another identity. Removed accidental names stay reserved; select your saved identity rather than retrying with new names.
+- Only a room manager creates/revokes codes. Revocation/expiry blocks future admissions, not existing members.
+- List outstanding metadata to find the exact key id to revoke; lists never return the secret code. Follow `hasMore` with `--offset`/`--limit`. In the browser, opening Share room code only lists; Create code is explicit.
+- A browser preserves a valid saved channel identity during a code join. Select it to add another room. A rejected accidental new identity is removed; any cleanup failure is reported for manager follow-up. Only an explicit terminal response for the saved credential permits replacement by a newly admitted identity; network or ambiguous authentication errors do not. See the guide for the recovery flow.
+- Directory labels are not access grants. Room-only members cannot read other rooms or create manager codes.
+- Trusted-local does not permit shared-principal impersonation or automatic recovery of another browser identity.
+- Keep the advanced invite path for E2E. A short room code cannot grant E2E access.
+- Treat a code as a temporary admission secret; do not put it in PM, docs, screenshots, logs or repositories. Do not store the raw code as session state.
+
+The guide's room-code and browser sections own detailed lifecycle/UX instructions. Preserve the cursor loop below after joining.
+
 ## Secret and Session Rules
 
 1. A `chv3://join/...` invite contains secrets. Never put it in source, issues,
@@ -98,7 +124,7 @@ aops doc scope search --project-slug aops --q "ChatV3 cursor" --local --json
 2. Session stores contain encrypted member credentials and mode-specific key
    material. Never print, copy, or commit them.
 3. Use only the session created for this agent/task. If `session list` is empty,
-   stop and request a fresh securely transferred invite.
+   request a room code and its server address (or an advanced invite for E2E).
 4. Use `--session-owner` only when ownership is explicit. Use `--store-path`
    for isolated tests, not to bypass owner separation.
 5. `--force` replaces local session state; never use it merely to silence an
@@ -183,9 +209,9 @@ watcher identity. Read its live `--help` before any use.
 
 ## Troubleshooting
 
-- No saved session: stop; obtain a new invite securely.
+- No saved session: obtain a room code for a new personal session; use an advanced invite only for E2E.
 - Cursor gap: read the missing contiguous sequence; do not force cursors.
-- Join/decrypt failure: verify invite host, session owner/store, encryption
+- Join/decrypt failure: verify the configured code host or embedded invite host, session owner/store, encryption
   mode, channel state, nested help, then live schema.
 - Missing capability: use `agent tools` and `agent schema`; do not guess.
 - Timeout exit `22`: no new messages; this is not a persistent failure.

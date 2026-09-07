@@ -60,11 +60,15 @@ npm install --global @aopslabs/aops
 aops
 ```
 
-The exact Server dependency is included; do not install it separately. The TUI is one System Check page. Configure the existing PostgreSQL connection and TLS privately, Test and save, then use the affected row Fix action for aops setup/migrations. The Server URL defaults to `http://127.0.0.1:5900`.
+The exact Server dependency is included; do not install it separately. The TUI is one System Check page. Choose SQLite for a file on this Server machine (Node.js 22.16 or newer), or enter an existing PostgreSQL connection and TLS privately. The Server URL defaults to `http://127.0.0.1:5900`.
 
-PostgreSQL must already exist; aops does not install, provision, start, stop, remove or administer its service, databases or roles. SQLite is visible but unavailable. Setup owns only aops migrations. Secrets never belong in chat, argv or logs.
+Use **Test connection** to check the entered settings without selecting them, creating a database, applying migrations or stopping aops. Test failure leaves the current installation unchanged. **Connect** is separate: after confirmation it retests, configures aops on the chosen database, applies eligible aops migrations and starts its services. A new SQLite file is created only by the confirmed setup. Switching databases does not copy or delete your previous data.
 
-Assets and CLI each offer Check/Update; internal prepare/apply is hidden. F3 opens sanitized commands/results. Updates may take 5–10 minutes; do not close the app. After verified update, acknowledge and run `aops` again. Minimum terminal is 96x30.
+PostgreSQL must already exist; aops does not install, provision, start, stop, remove or administer its service, databases or roles. SQLite files belong on the Server machine, not a network share or a client computer. Multiple computers connect to that same Server; see the remote-connection section. Secrets never belong in chat, argv or logs.
+
+Configure stays available when checks are healthy. Fix appears only for an eligible repair. Assets and CLI each offer Check/Update; internal prepare/apply is hidden. F3 opens sanitized commands/results. Updates may take 5–10 minutes; do not close the app. After verified update, acknowledge and run `aops` again. Minimum terminal is 96x30.
+
+Normal setup installs the bundled public agent assets; it does not require or seed a separate server catalog. Backup and restore are available through `aops db`, not a TUI backup page.
 
 ### 3.2 Existing Server
 
@@ -80,6 +84,8 @@ aops target doctor remote --json
 ```
 
 Remote identity uses the Server's browser-approved device flow. Community local access remains loopback-only trusted-local. An existing remote Server selection takes priority over an inferred local installation; it does not operate a local database or local services.
+
+For SQLite, all clients use the same aops Server over HTTP; they never open or synchronize its database file. Keep that file on the Server machine. A company-hosted Server uses the remote-session flow above. Alternatively, an operator-managed SSH tunnel can forward a local loopback port to the Server's loopback port; aops does not create the tunnel. Trusted-local access remains loopback-only. Configure/Test the exact forwarded origin, then Save it. Do not expose trusted-local directly on a public network.
 
 ## 4 `init`
 
@@ -98,9 +104,33 @@ guards before applying it.
 
 #### 5.1.1 Overview
 
-`aops setup server-env` saves private configuration for an existing PostgreSQL connection; it does not create PostgreSQL databases or roles. Prefer the TUI Database Configure dialog for private input. Headless input uses documented environment/private files; read `--help`.
+Prefer the TUI Database Configure dialog for private input. Choose PostgreSQL or SQLite. PostgreSQL accepts Form or Connection string input; only its password is masked. TLS is `require`, `verify-full`, or explicit unencrypted `disable`. SQLite uses an absolute file path on the aops Server machine and requires Node.js 22.16 or newer.
 
-The saved TLS policy is `require`, `verify-full`, or explicit unencrypted `disable`. Test and save verifies it first. Fresh `aops setup init --yes --json` discovers a saved connection even before a local installation exists. That command is read-only unless explicitly applied. Never echo secret configuration.
+**Test connection** checks the draft only. It never saves/selects it, creates or migrates a database, or stops services. It reports success or a specific safe error in the dialog. Reading an active SQLite WAL database may create coordination sidecars, but Test does not modify its application data or choose it for aops. Unsupported or foreign databases are rejected.
+
+**Connect** separately warns about interrupting connected agents, retests the draft, stages a private candidate configuration and runs the selected setup. Old databases remain intact. If a candidate is rejected before effects, installed readiness stays unchanged; if setup fails before switching profiles, aops attempts to recover exactly the previously active services and reports any recovery failure. Connect does not transfer any data. The explicit SQLite → PostgreSQL transfer below is a separate operation.
+
+For headless setup, read `aops setup server-env --help` and `aops setup init --help` for private environment/file inputs and preview/apply controls. Never echo secret configuration. Normal setup needs no catalog opt-out flag.
+
+Use `aops db backup` for a verified backup of the selected backend and `aops db list` to inspect it. SQLite uses an online consistent backup; restore requires the owned aops services to be stopped and explicit data-rewind confirmation. PostgreSQL and SQLite backup formats are not interchangeable. Native backups are restored to their own backend. The only cross-backend direction is the explicit full SQLite → PostgreSQL flow below.
+
+### Full SQLite → PostgreSQL transfer
+
+Use a CLI whose `aops db backup --help` includes `--portable`; a published guide does not mean an older installed binary has the feature. Run these local database commands on the relevant aops Server machine. `--instance` and `--data-root` select its local installation; a remote API target does not redirect database lifecycle commands.
+
+1. Stop the source aops Cockpit and Server for the final handoff, so no writes arrive after the snapshot. Run `aops db backup --portable --json` with that SQLite installation selected. It preserves a verified native SQLite snapshot and returns a portable `backup.bundleDirectory` and `backup.receiptPath`.
+2. Keep the containing transfer directory intact: `bundle/` plus sibling `receipt.json`. It contains every project's data and the ChatV3 keyring; keep it private. If moving machines, copy this whole directory privately to the target Server machine. Do not copy a live SQLite file alone.
+3. Configure/Connect the operator-provided PostgreSQL target separately using its private connection and TLS. This may prepare eligible aops migrations; transfer itself never runs migrations. Verify that the target is current and compatible. Existing target aops data will be replaced, not merged. There is no project/domain selection.
+4. Stop the target aops Cockpit and Server. With that PostgreSQL installation selected, run `aops db restore --backup <transfer-directory>/bundle --confirm-data-rewind --json`. It validates the complete schema, values and target constraints, takes a verified target undo, then replaces only all aops-owned rows in one transaction. It never uses CASCADE, rewrites source data, repairs invalid references, switches profiles or restarts services. Foreign data stays outside the replacement.
+5. Inspect the result. Success includes `services: stopped`, `connectionChanged: false`, row counts, weak-orphan counts and `undo.bundleDirectory`. Start aops Server/Cockpit explicitly when ready and verify actual PM, memory, documents and encrypted chat. Keep the source and undo until that readback succeeds.
+
+`aops db list` and `aops db which` report eligible local backups for the selected backend. Portable bundles are ineligible for SQLite. List eligibility verifies bytes/contract; target schema and stopped ownership are checked again on restore. Prefer an explicit path for transfer, not a guessed newest backup.
+
+Undo uses the same command on the same compatible PostgreSQL target: stop its aops services and run `aops db restore --backup <undo.bundleDirectory> --confirm-data-rewind --json`. A new verified undo is still mandatory; `--no-pre-restore-backup` and `--confirm-no-undo` cannot bypass it for portable/owned-set restore. Native PostgreSQL dumps keep their existing native restore path.
+
+Missing/incompatible schema, invalid JSON/types, UUID case-twin uniqueness conflicts and hard foreign-key orphans are rejected before replacement. Existing weak orphans are preserved and counted. On failure, read the safe error and recovery result: `targetState: unchanged` means no committed replacement; `unknown` (for example a lost COMMIT acknowledgement) is not success or a proven rollback. Keep services stopped and inspect/recover with the reported verified undo rather than blindly repeating the command.
+
+No PostgreSQL portable export, PostgreSQL → SQLite transfer, append/upsert, selected-project import or automatic backend switch is available. Backup/restore remains CLI-only; the one-page TUI is unchanged.
 
 ## 6 Local and remote access
 
@@ -1343,7 +1373,7 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops cockpit` | Open and independently operate AOPS Cockpit on its own loopback port |
 | `aops codex` | Experimental local agent-runtime integrations for Codex Desktop |
 | `aops config-root` | Print the brand-specific user config root |
-| `aops db` | Operator database surface: full PostgreSQL backup, listing and restore |
+| `aops db` | Operator database surface: full PostgreSQL/SQLite backup, listing and restore |
 | `aops discuss` | Manage hosted (server-first) Agentspace discussion topics |
 | `aops doc` | Docman authoring, retrieval, and publish sugar over the hosted AOPS plane |
 | `aops docs` | Generate AOPS documentation sections from live CLI registrations |
@@ -1463,7 +1493,7 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops chat channel create` | Create a ChatV3 channel and print the invite once; invite contains secrets |
 | `aops chat channel delete` | Hard-delete one ChatV3 channel after confirm-slug guard |
 | `aops chat channel purge-before` | Preview or apply admin cleanup for channels created before an ISO cutoff |
-| `aops chat channels` | List channels owned by or joined by the verified AuthV2 principal |
+| `aops chat channels` | List minimal channel and room labels; listing grants no content access |
 | `aops chat join` | Run `aops chat join --help` for the current command contract. |
 | `aops chat leave` | Run `aops chat leave --help` for the current command contract. |
 | `aops chat listen` | Run `aops chat listen --help` for the current command contract. |
@@ -1477,6 +1507,10 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops chat read` | Run `aops chat read --help` for the current command contract. |
 | `aops chat room` | ChatV3 room orientation helpers |
 | `aops chat room brief` | Build a paste-ready room brief from guidance, bindings, members, presence, and cursor refs |
+| `aops chat room code` | Time-limited room-only access codes (manager only) |
+| `aops chat room code create` | Create a time-limited room code and display the secret once |
+| `aops chat room code list` | List outstanding code metadata, never the secret code |
+| `aops chat room code revoke` | Revoke one room code without removing existing members |
 | `aops chat room create` | Create a room in the session channel (creator becomes its first participant) |
 | `aops chat room join` | Join a room roster (disjoin later with "room leave"); rejected after a room-level removal |
 | `aops chat room leave` | Leave a room roster (disjoin); the channel membership stays intact |
@@ -1504,7 +1538,7 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops chatv3 channel create` | Create a ChatV3 channel and print the invite once; invite contains secrets |
 | `aops chatv3 channel delete` | Hard-delete one ChatV3 channel after confirm-slug guard |
 | `aops chatv3 channel purge-before` | Preview or apply admin cleanup for channels created before an ISO cutoff |
-| `aops chatv3 channels` | List channels owned by or joined by the verified AuthV2 principal |
+| `aops chatv3 channels` | List minimal channel and room labels; listing grants no content access |
 | `aops chatv3 join` | Run `aops chatv3 join --help` for the current command contract. |
 | `aops chatv3 leave` | Run `aops chatv3 leave --help` for the current command contract. |
 | `aops chatv3 listen` | Run `aops chatv3 listen --help` for the current command contract. |
@@ -1518,6 +1552,10 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops chatv3 read` | Run `aops chatv3 read --help` for the current command contract. |
 | `aops chatv3 room` | ChatV3 room orientation helpers |
 | `aops chatv3 room brief` | Build a paste-ready room brief from guidance, bindings, members, presence, and cursor refs |
+| `aops chatv3 room code` | Time-limited room-only access codes (manager only) |
+| `aops chatv3 room code create` | Create a time-limited room code and display the secret once |
+| `aops chatv3 room code list` | List outstanding code metadata, never the secret code |
+| `aops chatv3 room code revoke` | Revoke one room code without removing existing members |
 | `aops chatv3 room create` | Create a room in the session channel (creator becomes its first participant) |
 | `aops chatv3 room join` | Join a room roster (disjoin later with "room leave"); rejected after a room-level removal |
 | `aops chatv3 room leave` | Leave a room roster (disjoin); the channel membership stays intact |
@@ -1564,9 +1602,9 @@ maintained manually; do not edit the marker blocks below by hand.
 
 | Command | Purpose |
 | --- | --- |
-| `aops db backup` | Take one full PostgreSQL backup with pg_dump and verify it |
+| `aops db backup` | Take and verify one full backup (PostgreSQL dump or consistent online SQLite snapshot) |
 | `aops db list` | List backups and say which ones a restore will accept |
-| `aops db restore` | Restore one full backup: --latest or --backup <path> |
+| `aops db restore` | Restore a native backup or SQLite portable bundle into PostgreSQL. Stop Server/Cockpit first for SQLite/portable restore; undo backup is mandatory. |
 | `aops db which` | Print the backup that --latest would choose, without restoring |
 
 #### 39.2.18 `aops discuss` commands
@@ -1904,7 +1942,7 @@ maintained manually; do not edit the marker blocks below by hand.
 | Command | Purpose |
 | --- | --- |
 | `aops server attest-external-snapshot` | Optionally record an operator-owned external PostgreSQL snapshot for one risky migration plan |
-| `aops server backup` | Create and verify a custom-format PostgreSQL backup plus receipt |
+| `aops server backup` | Create and verify a PostgreSQL dump or consistent online SQLite snapshot for the installed database |
 | `aops server backup list` | List existing backups and say which ones restore will accept |
 | `aops server backup-readiness` | Report whether this host can take the backup an update depends on, without mutation |
 | `aops server health` | Check the installed server health without mutation |
@@ -1917,10 +1955,10 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops server reset` | Remove local installation state without deleting PostgreSQL resources |
 | `aops server restart` | Restart the installed server |
 | `aops server restore` | Restore database data; dispatches on the install profile |
-| `aops server restore db` | Restore only PostgreSQL for one exact native application update |
+| `aops server restore db` | Restore the installed database for one exact native application update; a verify-only update does not rewind SQLite data |
 | `aops server rollback` | Rollback one native application update |
 | `aops server rollback app` | Rollback one native application update; restore its exact pre-migration snapshot when required |
-| `aops server setup` | Configure and start the local npm Server with a PostgreSQL connection |
+| `aops server setup` | Configure and start the local npm Server with PostgreSQL or SQLite |
 | `aops server start` (aliases: up) | Start the installed local npm/source Server |
 | `aops server status` | Show install and runtime status |
 | `aops server stop` (aliases: down) | Stop the server without deleting data |
@@ -1937,7 +1975,7 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops setup catalog status` | Inspect only the reserved official catalog scope |
 | `aops setup guide` | Print the packaged agent-readable AOPS installation skill |
 | `aops setup init` | Inspect or apply an explicit AOPS installation path |
-| `aops setup server-env` | Create or validate the private PostgreSQL/auth env for the npm server |
+| `aops setup server-env` | Create or validate the private PostgreSQL/SQLite/auth env for the npm server |
 
 #### 39.2.35 `aops skill` commands
 

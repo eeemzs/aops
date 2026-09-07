@@ -1,41 +1,33 @@
 # ChatV3 User Guide
 
-_Release Notes:_ Uses the private ignored .aops-cache/docman mirror path; no operational behavior changes.
-
 ## 1 Agent fast path
 
 ### 1.1 Overview
 
-#### 1.1.1 Overview
+#### 1.1.1 Agent fast path
 
-ChatV3 is the AOPS coordination and wake plane. Use it to exchange bounded
-messages, references, room context, and review notifications. Do not use chat
-as the canonical owner of design decisions, implementation plans, review
-results, durable memory, or documentation.
+ChatV3 is the aops coordination and wake plane. Discuss owns decisions, Projectman owns plans and reviews, Agentspace owns durable memory, and Docman owns documents.
 
-Use this sequence before reading the whole guide:
-
-1. Verify the host and inspect the smallest command help surface.
-2. List saved local sessions. Never guess a session id or reuse another
-   agent's encrypted session store.
-3. Read the room from the saved cursor before listening.
-4. Mark messages delivered/read only after processing them.
-5. Treat `listen` exit code `22` as a normal timeout with no new messages.
-6. Use Projectman, Discuss, Docman, or Agentspace for durable truth; send only
-   compact ids and outcomes through ChatV3.
+1. Check the host and the smallest command help.
+2. Reuse your own saved session. If you have no session, ask the room manager for a room code and the server address.
+3. Join that room, then read from your saved cursor before listening.
+4. Mark delivered/read after processing messages. Listen exit 22 is a normal timeout.
+5. Send compact outcomes and canonical record references.
 
 ```bash
 aops host health --json
-aops chat --help
+aops chat join --help
 aops chat session list --json
-aops chat read --session <session-id> --room <room> --after-seq <cursor> --json
-aops chat listen --session <session-id> --room <room> --after-seq <latest-seq> \
-  --timeout-sec 55 --json
+aops chat join --code '<room-code>' --handle agent-mac --session room-work --apply --json
+aops chat read --session room-work --room <room> --after-seq <cursor> --json
+aops chat listen --session room-work --room <room> --after-seq <latest-seq> --timeout-sec 55 --json
 ```
 
-The installed launcher may be `aops`; the package launcher is `aops-cli`.
-`aops chat` is canonical. `aops chatv3` is a compatibility command tree kept
-for existing automation; prefer `aops chat` for new work.
+A simple request to your agent: “Use aops chat to join this room with the code I provide, as agent-mac.”
+
+The code belongs to the configured aops server; it does not contain a server URL. Use the supplied server address when it differs from your configured host. Room-code commands require matching CLI and Server support: inspect help and the live schema first. An older installation without `--code` needs updating; do not work around missing support with shared credentials.
+
+`aops chat` is canonical; `aops chatv3` remains a compatibility alias. The package launcher may be named `aops-cli`.
 
 ## 2 Ownership and truth boundaries
 
@@ -79,30 +71,25 @@ Help wins for sugar flags. The running schema wins for raw hosted payloads.
 
 ### 3.1 Invite strings are secrets
 
-#### 3.1.1 Overview
+#### 3.1.1 Room codes and advanced invites
 
-A `chv3://join/...` invite contains secret material. Share it only through a
-secure channel. Do not place it in chat history, shell history, issue text,
-logs, screenshots, repositories, or documentation.
+A room code is a bearer admission secret in the form `xxxx-xxxx`: four letters/digits, a hyphen, then four letters/digits. Codes are case-insensitive; generated codes exclude the ambiguous characters `0`, `1`, `i`, `l`, and `o`. The server generates it; callers must not invent or decode it. Anyone holding an active code can join its one server-encrypted room before expiry.
 
-`channel create` prints the invite once in `result.invite`. Command JSON
-redacts invite secrets from other output. Prefer an interactive secret transfer
-instead of constructing or decoding invite strings by hand.
+Codes are reusable for 60 minutes by default. The CLI permits a manager to choose 1–1440 minutes. Expiry or revocation stops new admissions; it does not remove members who already joined. Member removal is a separate operation.
+
+Share codes privately with the intended people or agents. Do not commit them, publish them in issues, or include them in screenshots or diagnostic logs. The backend stores a verifier rather than the raw code. The create result displays the code; join output redacts it. Browser dialogs clear code text when closed and do not put it in URLs or browser storage.
+
+An advanced `chv3://join/...` invite remains available for E2E channels and carries different secret material. A short room code is not an E2E invite and cannot grant E2E access. Do not translate one into the other.
 
 ### 3.2 Server-encrypted and end-to-end modes
 
-#### 3.2.1 Overview
+#### 3.2.1 Encryption modes
 
-`server-encrypted` channels use a database-canonical server keyring. The
-database and its backups therefore contain material needed to decrypt that
-history; protect PostgreSQL, backups, replicas, and exports accordingly.
+Server-encrypted channels use a database-canonical server keyring. The database and its backups contain material needed to decrypt that history; protect SQLite files, PostgreSQL databases, backups, replicas and exports accordingly. This mode supports short room codes and is the browser's simple default.
 
-`e2e` channels keep epoch material client-managed. Database access alone does
-not replace the client key material. An e2e session store therefore carries a
-different recovery responsibility than a server-encrypted session.
+E2E channels keep epoch material client-managed. Database access alone does not replace the client key material. Use the advanced invite path and retain your own client keys. A server-encrypted room code cannot be used for E2E admission.
 
-Choose the mode at channel creation. Do not claim e2e confidentiality for a
-server-encrypted channel.
+Choose the mode when creating a channel. Do not describe server-encrypted history as confidential from the host.
 
 ### 3.3 Local session stores
 
@@ -149,35 +136,65 @@ Capture the returned invite securely. Do not paste it into the room itself.
 
 ### 4.2 Join an existing channel
 
-#### 4.2.1 Overview
+#### 4.2.1 Join a room with a code
 
-Join uses the server URL embedded in the invite unless `--api-base-url`
-explicitly overrides it.
+### In the browser
+
+Open Chat, choose **Join with code**, enter the code and your name, then choose **Join room**. Names are unique within the channel even when your access covers only one room. If a name is already used, choose another or select your own saved identity. A code never takes over an existing or removed identity.
+
+Your personal membership is saved in that browser's storage. Another browser needs to join separately. Reloading the same browser reuses the saved identity, not the room code.
+
+To add another room in the same channel, select your existing identity in the Join dialog and use that room's code. The code extends your own room grants without replacing your member token. If you mistakenly choose New participant for a channel already saved in this browser, the join is refused, the extra participant is removed, and your saved identity is kept. The removed accidental participant's name stays reserved in that channel. Select your saved identity rather than retrying with new names. If removing the extra participant fails, ask a room manager to remove it; do not replace the saved token.
+
+If a manager removed your saved identity, a new code join checks that saved credential. Only an explicit server response that it is inactive, unknown, or no longer matches permits the newly admitted personal identity to replace it. Network errors or ambiguous authentication failures preserve the saved identity and report the problem. Reloading alone does not delete it.
+
+### From an agent or CLI
 
 ```bash
-aops chat join '<invite-from-secure-transfer>' \
-  --handle codex \
-  --session codex-task \
-  --save-session \
-  --json
+aops chat join --code '<room-code>' --handle agent-mac --session room-work --apply --json
 ```
 
-If the session id already exists, stop and inspect it. `--force` replaces local
-session state and must not be used merely to silence an ownership conflict.
+Use `--preview` instead of `--apply` to inspect the intended effect without contacting admission or saving a session. Code validity is checked only when applying. A successful join saves an encrypted personal session automatically. If `--session` is omitted, a code join uses `<handle>-room-<8 hex>`; `--display-name` optionally sets a new member's display name. Use a fresh session id for a new identity; use the same owned session and handle for another room in the same channel. `--force` is not supported for code joins.
+
+The code is scoped to the configured server. Add `--api-base-url <server-origin>` when the room is hosted elsewhere. Do not copy another agent's session store.
+
+### Share or revoke a code
+
+A room manager opens **Share room code** to see outstanding code metadata. Opening or reopening the dialog is read-only: it never creates a replacement code. Choose **Create code** to issue one, then copy its secret before closing. Each listed entry has its own **Revoke** action, identified by key id and creation/expiry time.
+
+CLI equivalents:
+
+```bash
+aops chat room code list --session owner-session --room planning --json
+aops chat room code create --session owner-session --room planning --expires-in-minutes 60 --apply --json
+aops chat room code revoke --session owner-session --room planning --key-id <returned-key-id> --apply --json
+```
+
+The create result contains the code, its key id and expiry. Lists contain only metadata, never the original secret. Closing hides the secret but keeps its revocable entry. Revoked and expired entries are excluded. Use **Load more**, or CLI `--offset`/`--limit` when `hasMore` is true. Revoke the exact key id you shared; revoking a different code does not cancel the original. Existing members keep access until separately removed.
+
+### Advanced E2E invite
+
+Use **Use an advanced invite** in the browser. The existing CLI path remains:
+
+```bash
+aops chat join '<advanced-invite>' --handle agent-mac --session e2e-work --save-session --json
+```
+
+The browser's **Copy invite** action is available after creating or joining an E2E channel in that page session, including narrow screens. The original invite is held in memory, not retained after reloading; keep the original invitation privately if it is needed again. A reloaded page explains why copying is unavailable. An invite embeds a server URL unless explicitly overridden. Never replace a saved session just to bypass an ownership conflict.
 
 ### 4.3 List and inspect sessions
 
-#### 4.3.1 Overview
+#### 4.3.1 List channels and sessions
 
 ```bash
 aops chat channels --space default --status active --json
 aops chat session list --json
-aops chat session get --session codex-task --json
+aops chat session get --session room-work --json
 ```
 
-Channel lists are scoped to the verified AuthV2 principal. On a trusted-local
-loopback host this is the trusted-local principal; remote environments may
-require an authenticated session.
+Channel discovery is a minimal directory, not permission to read messages. On a trusted-local host, it exposes channel and room labels; actual content, member information and encryption keys require the caller's own membership. Other authenticated host modes may filter the directory further.
+
+In the browser, accessible channels and rooms appear first. Other channels are collapsed, hideable label groups; ungranted rooms are disabled. A visible label is not a grant, and changing the URL cannot grant access. The default directory resolves the default space read-only; a missing space returns an empty list instead of creating one.
 
 ## 5 Rooms, membership, presence, and bindings
 
@@ -200,18 +217,22 @@ membership and `chat leave` for channel membership.
 
 ### 5.2 Membership and presence
 
-#### 5.2.1 Overview
+#### 5.2.1 Membership and presence
 
 ```bash
-aops chat member list --session codex-task --json
-aops chat room members --session codex-task --room task-223 --json
-aops chat presence set --session codex-task --room task-223 \
-  --state working --note "reviewing the guide" --json
-aops chat presence list --session codex-task --room task-223 --json
+aops chat member list --session owner-session --json
+aops chat room members --session room-work --room planning --json
+aops chat presence set --session room-work --room planning --state working --note "reviewing the change" --json
+aops chat presence list --session room-work --room planning --json
 ```
 
-Member removal/restore changes access. Confirm whether the target is the whole
-channel or only one room before running either operation.
+The channel-level `member list` example requires a channel-wide identity such as `owner-session`. A room-code session uses `room members` for its granted room instead.
+
+A code-created member has room-scoped access, not a channel-wide grant. It cannot read other rooms' messages, keys, presence or references, or mint manager codes. Another room requires its own admission code. Selecting a disabled room or using the ordinary room-join command does not bypass this boundary.
+
+Channel and room membership remain distinct. Check the target scope before member removal or restoration. Code expiry/revocation does not remove an existing member. A removed identity must not be reactivated by a new browser presenting a code.
+
+Trusted-local is host authentication, not permission to impersonate another browser's member. Keep your own saved member token; there is no automatic shared-local identity recovery.
 
 ### 5.3 Loose reference bindings
 
@@ -357,11 +378,11 @@ aops chat channel purge-before --before 2026-07-01T00:00:00.000Z \
 
 ### 9.1 No saved session
 
-#### 9.1.1 Overview
+#### 9.1.1 No saved session
 
-If `session list` is empty, stop. Do not infer an encrypted session from
-another task, owner, or repository. Obtain a new invite through secure transfer
-or ask the channel owner to create the intended session.
+If `aops chat session list` is empty, ask the room manager for a room code and the server address. Create your own session by joining with that code and your own name. For an E2E channel, request an advanced invite instead.
+
+Do not infer a session from another task, owner or repository, and do not copy another participant's token or session store.
 
 ### 9.2 Cursor gap or stale cursor
 
@@ -374,18 +395,20 @@ disappear.
 
 ### 9.3 Join or decrypt failure
 
-#### 9.3.1 Overview
+#### 9.3.1 Join or decrypt failure
 
-Check, in order:
+Check these in order:
 
-1. the exact host embedded in the invite;
-2. the intended session owner and store path;
-3. channel encryption mode and locked/archived state;
-4. the smallest relevant CLI help;
-5. live hosted tool schema for deeper diagnostics.
+1. Confirm the configured server for a room code, or the host embedded in an advanced invite.
+2. Enter your name. Placeholder text is not a saved value.
+3. For invalid, expired or revoked codes, ask the room manager for a new code. Admission attempts share a host-wide default budget of 30 per minute, separate from message polling; the host may configure this limit. Wait before retrying after a rate-limit response.
+4. For a name conflict, choose another name or select your own saved identity. Names are channel-wide, while code access remains room-only.
+5. Confirm the intended session owner, store and encryption mode. A room code only supports server-encrypted rooms.
+6. Inspect the smallest CLI help and live hosted schema if the installed version lacks the command.
 
-Never log tokens, invite strings, wrap secrets, epoch keys, or server keyring
-material while diagnosing.
+Do not use shared-local recovery or another browser's token to bypass admission. A missing browser session needs a fresh admission, not impersonation of the old name.
+
+Never log member tokens, room codes, advanced invites, wrap secrets, epoch keys or server keyring material while diagnosing.
 
 ### 9.4 Experimental wake watcher
 
@@ -434,7 +457,7 @@ hand-edit them as canonical truth.
 
 ### 11.1 Generated command catalog
 
-#### 11.1.1 Overview
+#### 11.1.1 Generated command catalog
 
 <!-- aops-generated:chatv3-command-catalog:start -->
 > This appendix is generated from the public `aops chat` Commander registrations. `aops chatv3` is a compatibility command tree and is not duplicated here. Regenerate with `aops docs user-guide --guide chatv3`.
@@ -447,7 +470,7 @@ hand-edit them as canonical truth.
 | `aops chat channel create` | Create a ChatV3 channel and print the invite once; invite contains secrets |
 | `aops chat channel delete` | Hard-delete one ChatV3 channel after confirm-slug guard |
 | `aops chat channel purge-before` | Preview or apply admin cleanup for channels created before an ISO cutoff |
-| `aops chat channels` | List channels owned by or joined by the verified AuthV2 principal |
+| `aops chat channels` | List minimal channel and room labels; listing grants no content access |
 | `aops chat join` | Run `aops chat join --help` for the current command contract. |
 | `aops chat leave` | Run `aops chat leave --help` for the current command contract. |
 | `aops chat listen` | Run `aops chat listen --help` for the current command contract. |
@@ -458,6 +481,9 @@ hand-edit them as canonical truth.
 | `aops chat presence set` | Run `aops chat presence set --help` for the current command contract. |
 | `aops chat read` | Run `aops chat read --help` for the current command contract. |
 | `aops chat room brief` | Build a paste-ready room brief from guidance, bindings, members, presence, and cursor refs |
+| `aops chat room code create` | Create a time-limited room code and display the secret once |
+| `aops chat room code list` | List outstanding code metadata, never the secret code |
+| `aops chat room code revoke` | Revoke one room code without removing existing members |
 | `aops chat room create` | Create a room in the session channel (creator becomes its first participant) |
 | `aops chat room join` | Join a room roster (disjoin later with "room leave"); rejected after a room-level removal |
 | `aops chat room leave` | Leave a room roster (disjoin); the channel membership stays intact |
@@ -474,7 +500,7 @@ hand-edit them as canonical truth.
 
 ### 11.2 Generated discovery guide
 
-#### 11.2.1 Overview
+#### 11.2.1 Generated discovery guide
 
 <!-- aops-generated:chatv3-discovery:start -->
 > `aops chat` is the convenience CLI, not the complete ChatV3 domain. Discover the running server before invoking capabilities that do not have sugar commands.

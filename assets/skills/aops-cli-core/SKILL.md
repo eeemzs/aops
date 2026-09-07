@@ -1,9 +1,9 @@
 ---
 name: aops-cli-core
-version: 19
+version: 20
 description: "Use when an AI agent needs AOPS CLI core operator playbook: help-first discovery, guard flags, project registry/project selection, partitioned sync, archive lifecycle, server-canonical vs local cache rules, hosted invoke fallback, doc-reading ladder, and schema fallback. Thin guide; .aops-cache/docman/aops-guides/aops-cli-user-guide.md and command --help are authoritative."
 metadata:
-  supersedes: "v18"
+  supersedes: "v19"
   short-description: "AOPS CLI core operator thin discipline guide"
   tags:
     - cli
@@ -88,6 +88,12 @@ aops-cli agent schema --tool agentspace.memory-item.search-memory-items --summar
 | `--yes` | non-interactive/fail-fast; not a substitute for `--apply` or `--confirm` |
 
 Common default: reads need no guard, writes need `--apply`, destructive writes need `--apply --confirm`.
+
+## Local Database Backup And Transfer
+
+Use `aops db --help` and the CLI User Guide's database backup/transfer instructions. These are local Server-machine commands; an API target does not redirect them. Native PostgreSQL and SQLite backups stay separate.
+
+On a supporting build, `db backup --portable` exports **all SQLite aops data** for PostgreSQL only. Check the installed flag before offering it. Restore requires a compatible prepared PostgreSQL schema, stopped owned Server/Cockpit, explicit `--confirm-data-rewind` and a verified target undo. It replaces all aops-owned rows, preserves the source/foreign data, and leaves services stopped. Keep the bundle and sibling receipt together. No project selection, merge, PostgreSQL-to-SQLite conversion, implicit Connect or restart. An uncertain restore is not success; read its safe recovery result and preserve the undo. Native backup options must not be used to bypass the portable undo requirement.
 
 ## Server-Canonical Truth And Local Caches
 
