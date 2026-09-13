@@ -1,9 +1,9 @@
 ---
 name: aops
-version: 12
+version: 13
 description: "Use when an operator or AI agent needs to discover which AOPS CLI family skill applies — project planning, hosted missions, working disciplines, durable memory, document graph, file snapshots, multi-agent coordination, read-only cockpit views, hosted skill/prompt authoring, agent profiles, or board lifecycle. This skill is a thin router/index over the aops-cli-* skill family and AOPS working-discipline skill; load the matching family skill afterwards. Triggers: 'aops', 'aops-cli', 'AOPS overview', 'which aops skill', 'aops cli surface', 'plan in aops', 'aops mission', 'aops discipline', 'aops memory', 'aops discuss', 'aops chat', 'aops docman', 'aops fileman'."
 metadata:
-  supersedes: "v10"
+  supersedes: "v12"
 ---
 
 # AOPS skill index
@@ -15,6 +15,46 @@ This skill is a **thin router/index**. It does not carry workflow detail — it 
 > Override priority across the AOPS skill family: `--help` wins over skill text (canonical command surface); domain user guide wins over skill text (canonical normative content). Searchable principles: AOPS Docman document `aops-doc-skill-system-principles` (slug:aops, search by title + section name + keywords).
 
 > Closeout policy: board closeout is operator-controlled. Agents should not auto-run `pm board closeout` or closeout memory just because a turn is ending; use resume/handoff/checkpoint context until the operator explicitly requests or approves closeout.
+
+## First contact: explain AOPS and choose the session shape
+
+When the operator says only “use AOPS”, or the agent cannot infer the intended
+workflow, start with a short orientation. If the request already names the task
+and working style, proceed without asking the same questions again.
+
+AOPS is an agentic helper and control plane. Its most-used capabilities are:
+
+- `aops doc`: create, version, publish, and read documents. Canonical document
+  truth is always the server; local Docman files are generated mirrors.
+- `aops mem`: write durable memory notes for kickoff, checkpoint, resume/handoff,
+  decisions, blockers, rules, and session summaries. Every memory note has a
+  concise human-readable title.
+- `aops pm`: plan and track work with a board, a sprint, or both; microtasks,
+  issues, feedback, review requests, and review results keep execution truthful.
+- Other supported families cover chat, Discuss, files, Tasker/Runner,
+  read-only cockpit views, profiles, prompts, skills, and artifacts. Hosted
+  missions are distribution-dependent: use them only if live CLI/tool discovery
+  exposes that capability. Discover
+  them with this index, the canonical AOPS documents, and the smallest relevant
+  `aops <family> --help`. Offer to produce a more detailed capability map when
+  the operator wants one.
+
+For material work, Docman, memory, and Projectman are the normal control
+surfaces: Docman owns versioned knowledge, memory carries durable session
+context, and Projectman owns plan/status/review truth. The default discipline is
+solo. Collaboration is optional.
+
+When the operator has not chosen a session shape, ask only what they want to
+achieve in this session and whether they prefer solo work or collaborative work.
+In collaborative work, the operator may assign `implementer-driver` and
+`reviewer` roles. If the agent runtime supports terminal sessions, peers can run
+in specifically named tmux sessions; otherwise use a hosted chat room. The
+operator can follow the room and project state at `http://127.0.0.1:5900`. For a
+broad or costly design fork, the implementer may open a standalone Discuss topic
+before implementation, bind the accepted decision into an AOPS plan, and ask the
+reviewer to approve that plan. Simpler work may use only PM and memory, or leave
+normal PM review requests for another agent to evaluate later. Discuss and live
+collaboration are never implied merely because AOPS is in use.
 
 ## Discovery: which family for what
 
@@ -36,7 +76,7 @@ Planning truth (server-canonical): `pm board/ktask/sprint/utask/issue/feedback/h
 
 ### aops-cli-mission
 
-Hosted Agentspace mission command discipline: mission create/list/get/update/resume, mission policy seed through `--policy-json`, active Projectman implementation-plan references, `aops-cli start --resume` integration, and the ownership boundary between Mission, Projectman, and Agentspace memory. **Load this skill** when creating or resuming a hosted mission, carrying mission policy into startup, binding implementation-plan refs, or diagnosing mission/session resume behavior. Mission closeout checks and handoff helpers are explicit future automation unless the matching command exists in live `--help`.
+Distribution-dependent hosted mission discipline and its boundary with Projectman plans and Agentspace memory. Check `aops mission --help` before using the family; if it is unmounted, use `aops plan get`, `aops pm resume`, memory, and live `aops agent tools` discovery instead. **Load this skill** only when a hosted mission operation is exposed in the current distribution; never assume `start --resume` or mission lifecycle commands from the skill text alone.
 
 ### aops-working-disciplines
 

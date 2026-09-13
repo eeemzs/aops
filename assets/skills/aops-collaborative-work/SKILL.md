@@ -1,10 +1,10 @@
 ---
 name: aops-collaborative-work
-version: 13
+version: 14
 description: "Use when an AI agent starts or runs an AOPS-backed work session: token-efficient startup reads, solo-first agentic flow with PM/memory/doc discipline, optional async PM review requests across sessions, optional hosted chat-room task intake, optional multi-agent coordination via hosted chat + PM review + standalone discuss, sub-skill routing, and fast command recipes with help/schema fallback. Includes the verify-first consensus-to-build operational recipe for chat-room work."
 metadata:
-  supersedes: "fefa3617-9c71-4ade-bf63-63d10c07e0b7"
-  updatedFor: "projectman-enum-help-alignment-20260826"
+  supersedes: "c4597ef4-7b1d-4716-b521-718db9360774"
+  updatedFor: "memory-title-and-pm-status-discipline-20260913"
   short-description: "Solo-first agentic AOPS session playbook; chat-room/discuss optional"
   tags:
     - aops
@@ -40,7 +40,7 @@ If this skill conflicts with command `--help`, `aops-cli agent schema`, or the A
 
 Roles are operator-only in any multi-agent mode; never default by agent name or runtime brand. Modes layer onto solo: `chat-room` adds a hosted coordination room on top of the same solo PM/memory discipline.
 
-Kickoff answers can be collected with `aops-cli start`: TTY-interactive for the operator; agents run `aops-cli start --json` (interview -> fill known answers -> ask the operator only `askOperator` items -> re-run with flags until `status: "ready"`). Default JSON is compact: prefer `--out <file>` and follow `result.promptRef.path`; re-run with `--full-output` only when an inline prompt is truly required. When resuming an existing mission, use `aops-cli mission resume --id <mission-id> --json` for the compact schemaVersion 1 pack, or `aops-cli start --resume <mission-id> --json` to compose the starter with that pack. `result.memoryBrief` is the default read-only startup memory pack; `result.sessionGuidance` carries layered runtime rules, discipline guardrails, accepted playbooks, and ranked experience briefs. Use `--no-memory-brief` for low-context or scripted starts that should skip the memory pack entirely.
+Kickoff answers can be collected with `aops-cli start`: TTY-interactive for the operator; agents run `aops-cli start --json` (interview -> fill known answers -> ask the operator only `askOperator` items -> re-run with flags until `status: "ready"`). Default JSON is compact: prefer `--out <file>` and follow `result.promptRef.path`; re-run with `--full-output` only when an inline prompt is truly required. For an existing plan, use `aops-cli plan get --project-slug <slug> --id <plan-id> --json` and `aops-cli pm resume --project-slug <slug> --for <agent> --json`. The Community CLI does not mount `mission` or `start --resume`; use hosted mission operations only after the live `aops-cli agent tools` / `aops-cli mission --help` surface confirms availability. `result.memoryBrief` is the default read-only startup memory pack; `result.sessionGuidance` carries layered runtime rules, discipline guardrails, accepted playbooks, and ranked experience briefs. Use `--no-memory-brief` for low-context or scripted starts that should skip the memory pack entirely.
 
 ## Startup block (token-efficient)
 
@@ -53,12 +53,11 @@ aops-cli start --task "<task>" --json --out tmp/start.md # compact JSON + result
 aops-cli start --task "<task>" --full-output --json      # inline prompt only when needed
 aops-cli start --reminder --task "<task>" --area <area> --json # bounded read-only sessionGuidance
 aops-cli start --task "<task>" --no-memory-brief --json  # skip result.memoryBrief only
-aops-cli mission resume --id <mission-id> --json         # compact mission resume + sessionGuidance
-aops-cli start --resume <mission-id> --json              # starter prompt + embedded compact mission pack
+aops-cli plan get --project-slug <slug> --id <plan-id> --json # existing sprint-backed plan
 aops-cli mem brief --subject project --json              # standalone read-only startup pack when start was not used
 aops-cli pm board list --json                            # only if board unknown
 aops-cli pm board resume --board <slug> --json           # active tasks/sprints
-aops-cli pm resume --for <agent> --with-chat --json      # pending work + chat unread (multi-agent)
+aops-cli pm resume --project-slug <slug> --for <agent> --json # PM work; read ChatV3 separately
 aops-cli pm issue list --status open --json              # open defects/risks
 aops-cli pm review-request list --status open --json     # async RRs waiting from prior sessions
 ```
@@ -88,7 +87,7 @@ Mirror refresh only when missing/stale: `aops-cli sync pull --apply --hosted-pro
 |---|---|
 | Router/index over the family | `aops` |
 | Guard flags, sync, mirrors, raw invoke fallback | `aops-cli-core` |
-| Coordination / wake: hosted chat rooms/DMs, members, bindings, listen/catchup | `aops-cli-chat` |
+| Coordination / wake: hosted chat rooms/DMs, members, bindings, saved-cursor read/listen | `aops-cli-chat` |
 | Decision/consensus protocol: standalone discuss, design-decision ritual, two-agent turn protocol, conclude outputs | `aops-cli-discuss` |
 | Review + execution truth: board/task/sprint/microtask/issue/feedback/review-request lifecycle | `aops-cli-projectman` |
 | Document graph authoring/search | `aops-cli-docman` |
@@ -110,13 +109,22 @@ Mirror refresh only when missing/stale: `aops-cli sync pull --apply --hosted-pro
 
    ```bash
    aops-cli mem brief --subject project --json                         # start/resume; read-only
-   aops-cli mem checkpoint --content "<status>" --task-id <task> --apply --json
-   aops-cli mem summary --content "<session summary>" --apply --json  # session end; short by default
+   aops-cli mem checkpoint --title "<checkpoint title>" --content "<status>" --task-id <task> --apply --json
+   aops-cli mem summary --title "<summary title>" --content "<session summary>" --apply --json  # session end; short by default
    ```
 
    `aops-cli start --json` returns `result.memoryBrief` unless `--no-memory-brief` is set, and returns `result.sessionGuidance` for layered rules/playbook/experience orientation. Do not immediately re-run broad memory or experience searches when the start/reminder pack already covers the same area. Use `mem checkpoint` at meaningful milestones/finish points, and `mem summary` at session end or explicit closeout/summary points. Handoff/carry-forward is a `resume` memory shape; keep one name (`resume`) instead of inventing a separate handoff kind. Use `mem brief|checkpoint|summary --help` for each sugar's "When to call" section.
 
+   Every new memory item needs its own concise human-readable `--title`; this is
+   separate from the linked PM subject label. Generate the title from the note's
+   meaning, never from a UUID or shortened id. `mem compact --write-summary` also
+   requires `--title`. If validation rejects a missing title, add it and retry.
+
 3. Implement in small verifiable slices following repo patterns. Mutations need `--apply`, destructive ops `--confirm`, scripted reads `--json`. Never hand-edit hosted skill/prompt mirrors or Docman mirrors; their canonical truth is server-side.
+   When implementation begins, move the task to `doing`. Mark each microtask
+   `completed` only with its own acceptance evidence. After all required work and
+   review are accepted, run `pm status audit` and move the task to `done`; do not
+   leave PM behind the implementation or use a bulk sprint status rewrite.
 4. Validate honestly: typecheck/tests/CLI smoke per repo convention. UI slices are verified in a live browser via Chrome MCP (Claude runtime: `Claude_in_Chrome` tools; Codex runtime: its Chrome MCP or browser skill). Never report validation you did not run in this session.
 5. Defects/blockers become PM issues, operator guidance becomes PM feedback — not prose:
 
@@ -148,15 +156,16 @@ A PM-only RR wakes nobody — in async mode that is intentional; discovery happe
 Room = operator task intake + coordination FLOW; decisions live in standalone discuss/PM, reviews in PM. One room per session.
 
 ```bash
-aops-cli chat room create --slug <slug> --title "<title>" --created-by <lead> --member "<lead>:<role>" --member "<peer>:<role>" --member "<operator-id>:operator" --apply --json
-aops-cli chat binding add --room-id <id> --binding-type projectman.board --ref-id <board-id> --title "PM board" --created-by <lead> --apply --json
-# bind as created: repo.url, agentspace.discussion-topic, docman.document, projectman.review-request
-aops-cli chat room brief --room-id <id> --for <peer>      # paste-ready peer onboarding
-aops-cli chat listen --for <agent> --room-id <id> --timeout-sec 570 --interval-sec 15 --json
-aops-cli chat catchup --for <agent> --room-id <id> --apply --summary --json
+aops-cli chat channel create --title "<session title>" --handle <lead> --session <lead-session> --save-session --json
+aops-cli chat room create --session <lead-session> --slug <slug> --title "<title>" --json
+aops-cli chat binding add --session <lead-session> --room <slug> --binding-type projectman.board --ref-id <board-id> --title "PM board" --json
+# invited peers join the channel with their own saved session; bind review and discussion refs as created
+aops-cli chat room brief --session <lead-session> --room <slug> --for <peer> --json
+aops-cli chat listen --session <lead-session> --room <slug> --after-seq <saved-seq> --timeout-sec 60 --mark-delivered --mark-read --json
+aops-cli chat room summary --session <lead-session> --room <slug> --after-seq <saved-seq> --json
 ```
 
-Listen exit codes: `0` unread → act, then `catchup --apply` (cursors advance ONLY via `catchup --apply` / `mark-read --apply`); `22` timeout → re-arm if still waiting; `21` room archived/membership ended → stop. Hosted room messages are the only chat wake path; a decision recorded in a discuss topic does not wake a room unless you post/bind it.
+Use each agent's saved session and last processed sequence for `--after-seq`. `chat read` or `chat listen` with `--mark-delivered --mark-read` advances cursors to the highest returned sequence; inspect the messages before the next loop. `listen` exits `0` on messages and `22` on timeout; re-arm after timeout and stop on other errors. `chat room summary` provides source messages for a concise memory digest, not a cursor mutation. A discussion decision does not wake a room unless posted there.
 
 Room message protocol (keeps the room scannable for the operator):
 
@@ -173,7 +182,7 @@ When setup precedes tasks, post a readiness block in the room AND echo it to the
 
 Escalate only when the operator assigns a live peer. The mechanics live in three sub-skills — load the one you need; do not duplicate them here:
 
-1. **Coordination / wake** — `aops-cli-chat`: one hosted room per session as task intake + wake signal. Bind the PM board, any active discussion topic (`agentspace.discussion-topic`), and review requests (`projectman.review-request`) into the room. Use `chat listen` / `chat catchup` as the read loop.
+1. **Coordination / wake** — `aops-cli-chat`: one hosted room per session as task intake + wake signal. Bind the PM board, any active discussion topic (`agentspace.discussion-topic`), and review requests (`projectman.review-request`) into the room. Use saved-session `chat listen` / `chat read` with `--after-seq` and delivered/read marks as the read loop.
 2. **Review + execution truth** — `aops-cli-projectman`: every review is a PM `review-request` with an appended `result`; re-review is a child RR (`--parent <rr-id>`); material findings become explicit `pm issue create --source review --review-request <rr-id>`. Post the RR ref into the room to wake the reviewer; the canonical record stays in PM.
 3. **Decisions / consensus** — `aops-cli-discuss`: for any material design fork, run a **standalone** discuss topic with the full design-decision ritual (independent research, ≥4 substantive non-final turns, `kind=final-stance` per agent, then `conclude`). Implementation stays blocked until the operator approves the consensus. There is **no automatic bridge** — surface the concluded decision explicitly via a PM feedback/issue carrying the discussion-topic ref, or a chat `agentspace.discussion-topic` binding.
 
@@ -188,20 +197,21 @@ decision or implementation plan. This is the operational "how" for the
 `aops-working-disciplines`; do not duplicate that guardrail body here. This
 section only maps phases to surfaces, commands, and evidence.
 
-The recipe is role-agnostic. Use mission-local roles such as `implementer`,
-`reviewer`, and `operator-approver`; concrete agent names belong in
-`mission.policy.roles` and room messages for that one mission.
+The recipe is role-agnostic. The operator assigns `implementer`, `reviewer`,
+and `operator-approver` roles for this session; concrete agent names belong in
+`aops-cli start --roles` and the room messages. An optional hosted mission is
+only used if live capability discovery exposes that family.
 
 | Phase | Canonical surface | Commands and evidence |
 |---|---|---|
 | Intake and room orientation | ChatV3 coordination | Join/read/send/listen with `aops-cli chatv3`; room message records the operator symptom and active roles. |
 | Verify-first stance | ChatV3 coordination + referenced truth source | Each active role posts a short stance: problem real/unclear, truth source checked, formal consensus needed or not, suspected risk/scope. |
 | Material decision | Standalone discuss | For material, cross-owner, or expensive-to-reverse work, run `aops-cli discuss start`, alternating turns, final stances, and `conclude`. Low-uncertainty atomic work may skip discuss. |
-| Consensus-to-plan binding | Mission + Projectman | Bind the accepted discussion refs into a mission and task/sprint-backed implementation plan with `NE / NICIN / DONE-WHEN`; request plan approval before implementation. |
+| Consensus-to-plan binding | Projectman plan | Bind accepted discussion refs into the sprint-backed implementation plan with `NE / NICIN / DONE-WHEN`; request plan approval before implementation. |
 | Implementation slice | Projectman + code/doc/hosted asset owner | Work in phases/microtasks; mutate canonical owners only. Open one PM review request per reviewed slice. |
 | Review and rework | Projectman review-request/result | Reviewer appends RRR on the PM review request. Material findings become `pm issue create --source review --review-request <rr-id>`; suggestions become PM feedback. |
 | Checkpoint | Agentspace memory | Use `mem checkpoint` after meaningful milestones, accepted slices, blockers, or handoff points. Do not checkpoint every chat line. |
-| Closeout or handoff | PM status audit + mission/memory | Run read-only PM status audit, leave mission status truthful, write memory summary/checkpoint, and keep board/room open unless the operator explicitly closes them. |
+| Closeout or handoff | PM status audit + memory | Run read-only PM status audit, leave task/plan state truthful, write memory summary/checkpoint, and keep board/room open unless the operator explicitly closes them. |
 
 Operational command skeleton:
 
@@ -230,13 +240,11 @@ aops-cli discuss turn --topic <topic> --agent <role-or-agent> --kind final-stanc
 aops-cli discuss conclude --topic <topic> --apply --json
 
 # Consensus-to-plan binding.
-aops-cli mission create --slug <mission-slug> --objective "<objective>" \
-  --policy-json '@./mission-policy.json' --apply --json
 aops-cli pm ktask create --board <board> --column Doing --title "<operator-readable task>" \
   --description "<consensus-backed scope>" --apply --json
-aops-cli pm sprint create --task <task-id> --name "<implementation plan>" \
+aops-cli plan create --project-slug <slug> --task <task-id> --name "<implementation plan>" \
   --goal "NE: <what>; NICIN: <operator value>; DONE-WHEN: <reviewable acceptance>" \
-  --apply --json
+  --reference "discussion-topic:<accepted-topic-id>" --apply --json
 aops-cli pm sprint update-plan --id <sprint-id> --phases-json '@./plan.json' --apply --json
 aops-cli pm review-request create --task <task-id> --sprint <sprint-id> \
   --review-scope "sprint:<sprint-id>" --requested-by <implementer> \
@@ -261,8 +269,9 @@ aops-cli pm issue create --source review --review-request <rr-id> \
 aops-cli pm feedback create --source agent --task <task-id> --sprint <sprint-id> \
   --title "<suggestion>" --type improvement --severity <low|medium|high> \
   --suggestion "<recommended improvement>" --apply --json
-aops-cli mem checkpoint --subject sprint --id <sprint-id> --task-id <task-id> \
-  --sprint-id <sprint-id> --content "<milestone, evidence, risks, next action>" \
+aops-cli mem checkpoint --title "<concise milestone title>" \
+  --subject sprint --id <sprint-id> --task-id <task-id> --sprint-id <sprint-id> \
+  --content "<milestone, evidence, risks, next action>" \
   --source-ref "review-request:<rr-id>" --validation-state "<validated|pending>" \
   --apply --json
 aops-cli pm status audit --task <task-id> --sprint <sprint-id> --json

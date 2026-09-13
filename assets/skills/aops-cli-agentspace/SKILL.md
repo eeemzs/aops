@@ -2,8 +2,8 @@
 name: aops-cli-agentspace
 description: "Use when an AI agent needs the AOPS CLI Agentspace playbook for token-efficient memory and resume, checkpoints and summaries, experience and playbooks, reusable hosted assets, agent profiles, activity, or structured discussions."
 metadata:
-  version: "28"
-  supersedes: "v27"
+  version: "30"
+  supersedes: "v29"
   short-description: "AOPS Agentspace memory, knowledge, assets, and discuss guide"
   tags:
     - aops
@@ -90,13 +90,31 @@ Memory is an evidence pack, not a transcript. Record purpose, canonical refs,
 concrete outcome, validation/review evidence, open risk, and next action. Never
 store secrets, raw logs, full documents, or chat transcripts.
 
+### Required memory title
+
+`title` is the memory note's own human-readable title; it is separate from a
+linked subject's `subjectTitle` or `--label`. Every create path must supply a
+nonblank title: `mem write`, `mem checkpoint`, and `mem summary` use
+`--title <title>`; `mem compact` requires `--title` when `--write-summary` is
+selected; raw `memory-item.create` / `memory-item.add-memory-item` input uses
+`data.title`. Updates may change it with `mem update --title`.
+
+Agents must generate a concise title from the note's meaning before writing. Do
+not use a UUID, shortened id, raw task code, or an empty placeholder as the
+display title. If a write reports `memory_item_title_required` or asks for
+`--title <title>`, generate the title and retry the same guarded write. Legacy
+records are backfilled deterministically from the first meaningful content line,
+with a kind-based “Untitled … memory” fallback only when no meaningful line
+exists.
+
 ## Checkpoint, Summary, and Retention
 
 Use a checkpoint after a meaningful milestone, decision, blocker, or handoff:
 
 ```bash
 aops mem checkpoint --project-slug <slug> --as milestone \
-  --content '@checkpoint.md' --task-id <task-id> --sprint-id <sprint-id> \
+  --title "<concise milestone title>" --content '@checkpoint.md' \
+  --task-id <task-id> --sprint-id <sprint-id> \
   --source-ref <ref> --validation-state "<evidence>" \
   --next-action "<next safe action>" --apply --json
 ```
@@ -115,7 +133,7 @@ or delete without explicit operator intent. Destructive pruning requires
 Capture experience only when it is reusable and evidence-backed:
 
 ```bash
-aops exp search --project-slug <slug> --q "<need>" --limit 5 --json
+aops exp search --project-slug <slug> --query "<need>" --limit 5 --json
 aops exp capture --project-slug <slug> --type problem-solution \
   --title "<lesson>" --problem "<problem>" --solution "<verified solution>" \
   --pm-ref <projectman-ref> --source-ref <source-ref> --preview --json

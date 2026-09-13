@@ -1,9 +1,9 @@
 ---
 name: aops-cli-projectman
-version: 20
+version: 21
 description: "Use when an AI agent needs the AOPS CLI Projectman playbook: server-canonical boards, tasks, sprints, microtasks, issues, feedback, review requests/results/re-reviews, status audit, and PM-bound handoff."
 metadata:
-  supersedes: "v18"
+  supersedes: "v20"
   short-description: "AOPS CLI Projectman thin discipline guide"
   tags:
     - cli
@@ -153,6 +153,27 @@ aops pm utask update --project-slug <slug> --sprint <sprint-id> \
 Read the current sprint first. Use `--expected-updated-at` for a full plan edit
 when concurrent work is possible. Prefer `utask update` for one microtask.
 
+### Keep Doing, completed, and Done truthful
+
+Move the kanban task to `doing` when implementation actually starts. As each
+planned microtask satisfies its acceptance evidence, update that item to the
+canonical `completed` status. Do not mark untouched or merely attempted items
+completed, and do not use `sprint set-status` as a shortcut because it rewrites
+all nested microtasks. After every required microtask, validation, document or
+asset update, and review gate is complete, run `pm status audit`; only then move
+the kanban task to `done`. Reconcile stale Doing/Done/completed state whenever
+code, review, and PM disagree.
+
+```bash
+aops pm ktask set-status --project-slug <slug> --id <task-id> \
+  --status doing --apply --json
+aops pm utask update --project-slug <slug> --sprint <sprint-id> \
+  --id <utask-id> --status completed --notes "<acceptance evidence>" --apply --json
+aops pm status audit --project-slug <slug> --task <task-id> --sprint <sprint-id> --json
+aops pm ktask set-status --project-slug <slug> --id <task-id> \
+  --status done --apply --json
+```
+
 ## Workflow 2: Review and Re-Review
 
 ```bash
@@ -186,7 +207,7 @@ aops pm handoff resume --project-slug <slug> --subject sprint \
   --id <sprint-id> --strict-subject --json
 ```
 
-Use `aops mem write` directly when no real Projectman subject exists. Do not
+Use `aops mem write --title "<memory title>"` directly when no real Projectman subject exists. Do not
 create a fake task solely to hold narrative memory.
 
 ## Always Rules
