@@ -102,7 +102,7 @@ guards before applying it.
 
 ### 5.1 Overview
 
-#### 5.1.1 Overview
+#### 5.1.1 Database setup, backup and transfer
 
 Prefer the TUI Database Configure dialog for private input. Choose PostgreSQL or SQLite. PostgreSQL accepts Form or Connection string input; only its password is masked. TLS is `require`, `verify-full`, or explicit unencrypted `disable`. SQLite uses an absolute file path on the aops Server machine and requires Node.js 22.16 or newer.
 
@@ -118,11 +118,11 @@ Use `aops db backup` for a verified backup of the selected backend and `aops db 
 
 Use a CLI whose `aops db backup --help` includes `--portable`; a published guide does not mean an older installed binary has the feature. Run these local database commands on the relevant aops Server machine. `--instance` and `--data-root` select its local installation; a remote API target does not redirect database lifecycle commands.
 
-1. Stop the source aops Cockpit and Server for the final handoff, so no writes arrive after the snapshot. Run `aops db backup --portable --json` with that SQLite installation selected. It preserves a verified native SQLite snapshot and returns a portable `backup.bundleDirectory` and `backup.receiptPath`.
+1. Stop the source aops Server for the final handoff, so no writes arrive after the snapshot. Run `aops db backup --portable --json` with that SQLite installation selected. It preserves a verified native SQLite snapshot and returns a portable `backup.bundleDirectory` and `backup.receiptPath`.
 2. Keep the containing transfer directory intact: `bundle/` plus sibling `receipt.json`. It contains every project's data and the ChatV3 keyring; keep it private. If moving machines, copy this whole directory privately to the target Server machine. Do not copy a live SQLite file alone.
 3. Configure/Connect the operator-provided PostgreSQL target separately using its private connection and TLS. This may prepare eligible aops migrations; transfer itself never runs migrations. Verify that the target is current and compatible. Existing target aops data will be replaced, not merged. There is no project/domain selection.
-4. Stop the target aops Cockpit and Server. With that PostgreSQL installation selected, run `aops db restore --backup <transfer-directory>/bundle --confirm-data-rewind --json`. It validates the complete schema, values and target constraints, takes a verified target undo, then replaces only all aops-owned rows in one transaction. It never uses CASCADE, rewrites source data, repairs invalid references, switches profiles or restarts services. Foreign data stays outside the replacement.
-5. Inspect the result. Success includes `services: stopped`, `connectionChanged: false`, row counts, weak-orphan counts and `undo.bundleDirectory`. Start aops Server/Cockpit explicitly when ready and verify actual PM, memory, documents and encrypted chat. Keep the source and undo until that readback succeeds.
+4. Stop the target aops Server. With that PostgreSQL installation selected, run `aops db restore --backup <transfer-directory>/bundle --confirm-data-rewind --json`. It validates the complete schema, values and target constraints, takes a verified target undo, then replaces only all aops-owned rows in one transaction. It never uses CASCADE, rewrites source data, repairs invalid references, switches profiles or restarts services. Foreign data stays outside the replacement.
+5. Inspect the result. Success includes `services: stopped`, `connectionChanged: false`, row counts, weak-orphan counts and `undo.bundleDirectory`. Start aops Server explicitly when ready and verify actual PM, memory, documents and encrypted chat. Keep the source and undo until that readback succeeds.
 
 `aops db list` and `aops db which` report eligible local backups for the selected backend. Portable bundles are ineligible for SQLite. List eligibility verifies bytes/contract; target schema and stopped ownership are checked again on restore. Prefer an explicit path for transfer, not a guessed newest backup.
 
@@ -136,9 +136,11 @@ No PostgreSQL portable export, PostgreSQL → SQLite transfer, append/upsert, se
 
 Run `aops db backup --json` on the Server machine. Keep the returned backup directory and its `receiptPath` together. The selected Server reads all aops-owned data directly; no separate PostgreSQL client executables are needed. Use a CLI whose help describes a first-party PostgreSQL bundle; this guide does not add that support to an older installed binary.
 
-To restore, stop aops Cockpit and Server, then run `aops db restore --backup <backup-directory> --confirm-data-rewind --json`. The target must already have the current compatible aops schema and the same PostgreSQL major as the backup. All aops data is replaced, not merged. A verified undo is taken first; unrelated tables are preserved. Verify the result before explicitly restarting services. `aops server restore` follows the same rules.
+To restore, stop aops Server, then run `aops db restore --backup <backup-directory> --confirm-data-rewind --json`. The target must already have the current compatible aops schema and the same PostgreSQL major as the backup. All aops data is replaced, not merged. A verified undo is taken first; unrelated tables are preserved. Verify the result before explicitly restarting services. `aops server restore` follows the same rules.
 
 Ordinary restore does not downgrade migrations. Recovery for an interrupted application update is a separate exact-update operation; follow its diagnostic and `aops server restore db --help`. Do not substitute a normal restore or repeat an uncertain operation blindly. The legacy `host database dump` command family is a separate explicit administration tool, not the aops backup method or an automatic fallback.
+
+When crossing from a legacy two-service installation, first prepare retained browser Chat recovery using the packaged UPGRADING.md. Then use the verified old owning CLI to stop its old Cockpit and Server. Preserve the database and browser profile; new Server lifecycle commands refuse a live or uncertain legacy owner. Open /ui on the configured Server origin after health succeeds.
 
 ## 6 Local and remote access
 
@@ -1378,7 +1380,6 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops chat` | ChatV3 encrypted channels, rooms, agent sessions, coordination, and foreground listening |
 | `aops chatv3` | Compatibility command tree for canonical `aops chat`. ChatV3 encrypted channels, rooms, agent sessions, coordination, and foreground listening |
 | `aops checkpoint` | Server-first session checkpoint facade over hosted Agentspace memory |
-| `aops cockpit` | Open and independently operate AOPS Cockpit on its own loopback port |
 | `aops codex` | Experimental local agent-runtime integrations for Codex Desktop |
 | `aops config-root` | Print the brand-specific user config root |
 | `aops db` | Operator database surface: full PostgreSQL/SQLite backup, listing and restore |
@@ -1585,19 +1586,7 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops checkpoint get` | Get a checkpoint by id, or the current checkpoint for a subject |
 | `aops checkpoint list` | List checkpoint timeline, including superseded records |
 
-#### 39.2.15 `aops cockpit` commands
-
-| Command | Purpose |
-| --- | --- |
-| `aops cockpit health` | Check the Cockpit host health without mutation |
-| `aops cockpit logs` | Show recent Cockpit logs |
-| `aops cockpit open` | Start stopped local services as needed and open Cockpit |
-| `aops cockpit restart` | Restart only the Cockpit process |
-| `aops cockpit start` | Start only the Cockpit process; do not start the AOPS Server |
-| `aops cockpit status` | Show Cockpit process status without mutation |
-| `aops cockpit stop` | Stop only the Cockpit process; do not stop the AOPS Server |
-
-#### 39.2.16 `aops codex` commands
+#### 39.2.15 `aops codex` commands
 
 | Command | Purpose |
 | --- | --- |
@@ -1606,16 +1595,16 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops codex unregister` | Remove one local ChatV3 member wake registration |
 | `aops codex wake` (aliases: wakeup) | Wake the exact local Codex Desktop session through internal IPC |
 
-#### 39.2.17 `aops db` commands
+#### 39.2.16 `aops db` commands
 
 | Command | Purpose |
 | --- | --- |
 | `aops db backup` | Take and verify all aops data (first-party PostgreSQL bundle or consistent online SQLite snapshot) |
 | `aops db list` | List backups and say which ones a restore will accept |
-| `aops db restore` | Restore a first-party PostgreSQL bundle or SQLite backup. Stop Server/Cockpit first; undo backup is mandatory. |
+| `aops db restore` | Restore a first-party PostgreSQL bundle or SQLite backup. Stop Server first; undo backup is mandatory. |
 | `aops db which` | Print the backup that --latest would choose, without restoring |
 
-#### 39.2.18 `aops discuss` commands
+#### 39.2.17 `aops discuss` commands
 
 | Command | Purpose |
 | --- | --- |
@@ -1634,7 +1623,7 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops discuss turn` | Append one turn to a hosted discussion topic (turn-order enforced server-side) |
 | `aops discuss wait` | Poll hosted status until an agent may write, an operator block appears, or the topic is ready/done |
 
-#### 39.2.19 `aops doc` commands
+#### 39.2.18 `aops doc` commands
 
 | Command | Purpose |
 | --- | --- |
@@ -1703,13 +1692,13 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops doc version list` | List document versions |
 | `aops doc version update` | Update document-version header metadata (status / title / summary / release-notes / label). To switch the canonical current version, use `aops-cli doc set-current-version` instead. |
 
-#### 39.2.20 `aops docs` commands
+#### 39.2.19 `aops docs` commands
 
 | Command | Purpose |
 | --- | --- |
 | `aops docs user-guide` | Generate or refresh the dynamic appendix sections in the AOPS CLI user guide |
 
-#### 39.2.21 `aops exp` commands
+#### 39.2.20 `aops exp` commands
 
 | Command | Purpose |
 | --- | --- |
@@ -1721,7 +1710,7 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops exp search` | Lexically rank hosted experience items (server-truth rows ranked client-side) |
 | `aops exp update` | Patch one hosted experience item |
 
-#### 39.2.22 `aops host` commands
+#### 39.2.21 `aops host` commands
 
 | Command | Purpose |
 | --- | --- |
@@ -1745,14 +1734,14 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops host registrations` | List installed host registrations in the operator registry |
 | `aops host unregister` | Remove an installed host registration |
 
-#### 39.2.23 `aops license` commands
+#### 39.2.22 `aops license` commands
 
 | Command | Purpose |
 | --- | --- |
 | `aops license activate` | Return commercial_profile_required without accepting commercial evidence |
 | `aops license status` | Show the free built-in domain profile |
 
-#### 39.2.24 `aops loop` commands
+#### 39.2.23 `aops loop` commands
 
 | Command | Purpose |
 | --- | --- |
@@ -1775,7 +1764,7 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops loop watch` | Short-lived poll-once/resume-once resume-on-trigger driver; on a qualifying trigger delegates to resume-agent, then exits (no daemon; durable execution belongs to Runner) |
 | `aops loop worktree-init` | Materialize operator-approved isolated worktrees without starting agents or merging |
 
-#### 39.2.25 `aops mem` commands
+#### 39.2.24 `aops mem` commands
 
 | Command | Purpose |
 | --- | --- |
@@ -1798,7 +1787,7 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops mem update` | Advanced: update an existing memory item |
 | `aops mem write` | Advanced: write an Agentspace memory item with standardized metadata |
 
-#### 39.2.26 `aops plan` commands
+#### 39.2.25 `aops plan` commands
 
 | Command | Purpose |
 | --- | --- |
@@ -1807,7 +1796,7 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops plan list` | List sprint-backed implementation plans |
 | `aops plan update` | Patch a sprint-backed implementation plan, including phases and microtasks |
 
-#### 39.2.27 `aops playbook` commands
+#### 39.2.26 `aops playbook` commands
 
 | Command | Purpose |
 | --- | --- |
@@ -1817,7 +1806,7 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops playbook promote` | Promote reviewed experience into a playbook memory rule/constraint |
 | `aops playbook show` | Render one hosted playbook as agent-readable markdown |
 
-#### 39.2.28 `aops pm` commands
+#### 39.2.27 `aops pm` commands
 
 | Command | Purpose |
 | --- | --- |
@@ -1886,7 +1875,7 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops pm utask set-status` | Update only the lifecycle status of a sprint-bound utask |
 | `aops pm utask update` | Patch a sprint-bound utask without replacing the full sprint plan |
 
-#### 39.2.29 `aops project` commands
+#### 39.2.28 `aops project` commands
 
 | Command | Purpose |
 | --- | --- |
@@ -1900,7 +1889,7 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops project migrate-local-root` | Plan or apply flat .aops projectman/agentspace migration into .aops-cache/projects/<slug> |
 | `aops project update` | Update a project |
 
-#### 39.2.30 `aops prompt` commands
+#### 39.2.29 `aops prompt` commands
 
 | Command | Purpose |
 | --- | --- |
@@ -1919,7 +1908,7 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops prompt version publish` | Publish a prompt version and sync the prompt current version |
 | `aops prompt version update` | Update an existing prompt version |
 
-#### 39.2.31 `aops resource` commands
+#### 39.2.30 `aops resource` commands
 
 | Command | Purpose |
 | --- | --- |
@@ -1929,7 +1918,7 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops resource list` | List reusable resource shells |
 | `aops resource update` | Update a resource |
 
-#### 39.2.32 `aops runner` commands
+#### 39.2.31 `aops runner` commands
 
 | Command | Purpose |
 | --- | --- |
@@ -1945,7 +1934,7 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops runner worker claim` | Atomically claim the next ready slice, or one explicit ready slice with --slice-id |
 | `aops runner worker release` | Atomically release, cancel, or fail one worker lease |
 
-#### 39.2.33 `aops server` commands
+#### 39.2.32 `aops server` commands
 
 | Command | Purpose |
 | --- | --- |
@@ -1972,7 +1961,7 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops server stop` (aliases: down) | Stop the server without deleting data |
 | `aops server update` | Update the installed local npm/source Server |
 
-#### 39.2.34 `aops setup` commands
+#### 39.2.33 `aops setup` commands
 
 | Command | Purpose |
 | --- | --- |
@@ -1985,7 +1974,7 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops setup init` | Inspect or apply an explicit AOPS installation path |
 | `aops setup server-env` | Create or validate the private PostgreSQL/SQLite/auth env for the npm server |
 
-#### 39.2.35 `aops skill` commands
+#### 39.2.34 `aops skill` commands
 
 | Command | Purpose |
 | --- | --- |
@@ -2006,7 +1995,7 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops skill version publish` | Publish a skill version and sync the skill current version |
 | `aops skill version update` | Update an existing skill version |
 
-#### 39.2.36 `aops sync` commands
+#### 39.2.35 `aops sync` commands
 
 | Command | Purpose |
 | --- | --- |
@@ -2018,7 +2007,7 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops sync sidecar` | Run a localhost-bound cockpit sidecar that exposes read-only local cache status/diff on the client machine |
 | `aops sync status` | Show local cache sync state |
 
-#### 39.2.37 `aops target` commands
+#### 39.2.36 `aops target` commands
 
 | Command | Purpose |
 | --- | --- |
@@ -2029,7 +2018,7 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops target show` | Run `aops target show --help` for the current command contract. |
 | `aops target use` | Run `aops target use --help` for the current command contract. |
 
-#### 39.2.38 `aops tasker` commands
+#### 39.2.37 `aops tasker` commands
 
 | Command | Purpose |
 | --- | --- |
@@ -2047,7 +2036,7 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops tasker work-group get` | Get a Tasker WorkGroup by id |
 | `aops tasker work-group list` | List Tasker WorkGroups |
 
-#### 39.2.39 `aops update` commands
+#### 39.2.38 `aops update` commands
 
 | Command | Purpose |
 | --- | --- |
@@ -2057,7 +2046,7 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops update prepare` | Download and verify exact candidate and rollback tarballs without changing the installation |
 | `aops update recover` | Finish one stranded exact plan at its target closure after a failed apply |
 
-#### 39.2.40 `aops view` commands
+#### 39.2.39 `aops view` commands
 
 | Command | Purpose |
 | --- | --- |

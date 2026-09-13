@@ -1,7 +1,5 @@
 # Docman User Guide
 
-_Release Notes:_ Updates Docman mirror examples and policy paths to .aops-cache/docman.
-
 ## 1 Agent fast path
 
 ### 1.1 Overview
@@ -1007,3 +1005,39 @@ aops agent schema --tool <docman-tool-id> --summary --json
 ```
 
 <!-- aops-generated:docman-discovery:end -->
+
+## 12 aops browser workflow
+
+### 12.1 Projects and favorites
+
+Open Projects and choose a project. Boards, Sprints, Memory and Documents show the records loaded for that project; select a record to open it in its own page. These counts describe the loaded records, not a separate audit of all project activity.
+
+Star a project to keep it in your favorites. Favorites are saved in this browser for this aops address, so they survive a reload. They are not shared automatically with another browser or server address. If browser storage is unavailable, aops tells you that the preference could not be saved.
+
+On smaller screens the project navigator opens as a drawer. Project tabs use a compact underline style; swipe horizontally to reach the remaining tabs. Project and sprint details start collapsed so the main content stays easy to scan.
+
+### 12.2 Document groups and starter drafts
+
+In Documents, use All or select a group. Roadmap and ADR stay available even before their groups exist; other groups appear from your project's saved document groups.
+
+Create is explicit: select Roadmap or ADR, choose Create, enter a title and inspect the preview. Roadmap creates a draft in Product Roadmaps; ADR creates a draft in Decisions. Nothing is created just by visiting a tab.
+
+A Roadmap starter contains Goals, Milestones and Status. An ADR starter contains Context, Decision and Consequences. The preview shows the same starting content that will be saved.
+
+New starters remain drafts, not current or published documents. Open the saved document to continue editing with your agent. Existing documents are opened as they are; aops does not replace their content with a fresh template.
+
+### 12.3 Check an unfinished starter
+
+If a starter was only partly saved, aops keeps the saved document identity. Reopen it and choose Check to inspect that same draft without changing it. If repairs are possible, Retry is a separate action.
+
+If the draft was removed or replaced, close the dialog and refresh the document list. Aops will not silently recreate it. If a connection or access check fails, correct that problem and check again.
+
+Closing a dialog, refreshing a list or selecting a group never publishes a document. Ask your agent to complete and publish the document when it is ready.
+
+### 12.4 Find recent documents from Dashboard
+
+Open Dashboard at /ui to see the latest record changes grouped by project. Documents appear alongside memory and planning records; selecting a document opens that exact document in Docs. Use Refresh after an agent creates or edits a record.
+
+Dashboard loads six projects at first and Load more adds six. Projects loaded X/Y describes that window; each group shows up to ten dated changes and its loaded-record count. It is a last-change overview, not a complete activity history or a search of every project. Undated records are counted separately, and a failed section is shown as unavailable rather than empty.
+
+Use Projects for the full project register and project-specific Boards, Sprints, Memory and Docs tabs. The Dashboard does not select a project automatically. To read every document in a project, open its Docs tab or the Docs workbench; document groups and starter drafts behave as described above.
