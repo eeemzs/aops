@@ -9,23 +9,26 @@ Use this discipline for one agent handling low- or medium-uncertainty work.
 
 ## Required assets
 
-- `aops-collaborative-work`
+- `aops-working-disciplines` (the solo rhythm)
 - `aops-cli-projectman`
 - `aops-cli-agentspace`
+- `aops-cli-docman` when the work writes documents
 
-Use `aops-cli-discuss` only when material design uncertainty appears.
+Working alone does not load `aops-collaborative-work`. A material design decision needs a second agent: switch to `design-first-consensus` with `aops-cli-discuss`.
 
 ## Flow
 
-1. Read the active Projectman task/sprint and relevant memory.
-2. Work in the smallest useful microtask slice.
-3. Validate the changed behavior and create an issue for material findings.
-4. Request asynchronous review when risk warrants it.
-5. Write a checkpoint at a meaningful phase boundary and leave PM state truthful.
+Follow the session's kickoff answers: whether aops pm is on, whether checkpoint notes are on, and whether review requests are left for later. Repository rules come first.
+
+1. Read relevant memory and, with aops pm on, the active Projectman task/sprint.
+2. Work in the smallest useful slice.
+3. Validate the changed behavior. With aops pm on, create an issue for material findings; otherwise report them to the user.
+4. Leave a review request for a later session when the user chose it. When the risk is high and the user did not choose it, suggest it to the user.
+5. With checkpoint notes on, write a checkpoint at a meaningful phase boundary. With aops pm on, leave PM state truthful.
 
 ## Boundaries
 
-- Projectman owns plan, issue, and review truth.
+- With aops pm on, Projectman owns plan, issue, and review truth.
 - Memory carries resume context; it does not replace the plan.
 - Hosted and Docman mirrors are read-only.
 - Commit, publish, deletion, or other operator effects require their own authority.

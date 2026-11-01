@@ -1,6 +1,6 @@
 # Projectman User Guide
 
-_Release Notes:_ Updates Projectman mirror paths to .aops-cache and preserves server-canonical ownership.
+_Release Notes:_ Covers what the installed AOPS ships; examples use <slug> for your project slug.
 
 ## 1 Agent fast path
 
@@ -80,7 +80,7 @@ server record remains canonical; the link only resolves the destination.
 
 ```bash
 aops project links list --json
-aops pm board list --project-slug aops --json
+aops pm board list --project-slug <slug> --json
 ```
 
 When the current repository is linked to multiple projects, always pass
@@ -678,41 +678,9 @@ Hosted state wins. Refresh through the supported sync/mirror command; never
 hand-edit the cache. Use `aops-cli-core` for current sync and project-link
 mechanics.
 
-## 12 Existing known gaps
+## 12 Appendix A. Verified command catalog
 
 ### 12.1 Overview
-
-Before opening a duplicate issue, inspect the exact existing records:
-
-1. `00d73182-997c-495f-93e9-de68ad5e0808` — sprint list limit/summary drift
-2. `70dc8b67-596a-4549-8b26-e9d0b51b6a12` — task-create dedupe response
-3. `bfdf5be0-1549-487e-a45a-eccfb9847a1f` — task update/short-id gap
-4. `78995bdd-ba40-4553-bc15-5d8ca8f36663` — feedback source enum drift
-5. `acb7e287-1fc0-49fe-9219-69e9ce329134` — list tag/concurrent microtask feedback
-6. `b81eeeaf-d695-4977-8f87-0a67d1401404` — sprint status id rewrite
-
-These references describe known debt; they do not authorize unrelated fixes.
-
-## 13 Canonical and distribution policy
-
-### 13.1 Overview
-
-The hosted Docman record in `slug:aops` is the development canonical source for
-the published guide. This repository file is the reviewed domain source used to
-prepare it. After publishing:
-
-1. build index and summary
-2. verify search and citation-first answer
-3. mirror-pull into `.aops-cache/docman/domain-guides/projectman-user-guide.md`
-4. materialize identical bytes into
-   `aops/assets/docs/user-guides/projectman-user-guide.md`
-
-The guide must be tagged/grouped as a public asset. The repository-local
-`.aops-cache` mirror remains derived and is not committed.
-
-## 14 Appendix A. Verified command catalog
-
-### 14.1 Overview
 
 This catalog is hand-authored from the post-change CLI help. It is not a
 generated region. Run the nested help for exact flags.
@@ -746,9 +714,9 @@ aops pm review-request --help
 aops pm handoff --help
 ```
 
-## 15 Appendix B. Hosted schema fallback
+## 13 Appendix B. Hosted schema fallback
 
-### 15.1 Overview
+### 13.1 Overview
 
 Use schema discovery when sugar is missing or when implementing a sugar
 command. Never guess a hosted tool id or input shape:

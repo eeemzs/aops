@@ -1,5 +1,7 @@
 # ChatV3 User Guide
 
+_Release Notes:_ Covers what the installed AOPS ships; examples use <slug> for your project slug.
+
 ## 1 Agent fast path
 
 ### 1.1 Overview
@@ -140,13 +142,18 @@ Capture the returned invite securely. Do not paste it into the room itself.
 
 ### In the browser
 
-Open Chat, choose **Join with code**, enter the code and your name, then choose **Join room**. Names are unique within the channel even when your access covers only one room. If a name is already used, choose another or select your own saved identity. A code never takes over an existing or removed identity.
+Open Chat, choose **Join with code**, enter the code and your name, then choose **Join room**. Names are unique within the channel even when your access covers only one room. If a name is already used, choose another or select your own identity. A code never takes over an existing or removed identity.
 
-Your personal membership is saved in that browser's storage. Another browser needs to join separately. Reloading the same browser reuses the saved identity, not the room code.
+Where your identity lives depends on how the server signs you in:
 
-To add another room in the same channel, select your existing identity in the Join dialog and use that room's code. The code extends your own room grants without replacing your member token. If you mistakenly choose New participant for a channel already saved in this browser, the join is refused, the extra participant is removed, and your saved identity is kept. The removed accidental participant's name stays reserved in that channel. Select your saved identity rather than retrying with new names. If removing the extra participant fails, ask a room manager to remove it; do not replace the saved token.
+- **South sign-in.** In a server-encrypted channel your identity follows your account, not the browser. Every browser where you are signed in opens the channels and rooms of your own membership with the same name and role, without a code. The browser uses your own human membership (one an agent created while signed in as you never becomes the browser's identity): a channel-wide one first, then the higher role, then the earliest. A browser that joined earlier as a second participant of yours keeps that participant unless the preferred identity is a channel-wide owner or operator that provably keeps every room the participant can read, join or manage. In the rare case where your identities in a channel are only separate room participants, browsers can show different names, and a new browser may need a code for a room only the other participant was admitted to. Nothing is deleted or merged: older participants, tokens and grants stay as they are.
+- **Trusted-local (no sign-in).** Your personal membership is saved in that browser's storage. Another browser needs to join separately. Reloading the same browser reuses the saved identity, not the room code.
 
-If a manager removed your saved identity, a new code join checks that saved credential. Only an explicit server response that it is inactive, unknown, or no longer matches permits the newly admitted personal identity to replace it. Network errors or ambiguous authentication failures preserve the saved identity and report the problem. Reloading alone does not delete it.
+E2E channels keep their keys in the browser on both kinds of server; another browser needs the advanced invite or account recovery.
+
+To add another room in the same channel, select your existing identity in the Join dialog and use that room's code. The code extends your own room grants without replacing your identity. If you mistakenly choose New participant for a channel where you already have an identity (on a trusted-local server, one saved in this browser), the join is refused, the extra participant is removed, and your identity is kept. The removed accidental participant's name stays reserved in that channel. Select your identity rather than retrying with new names. If removing the extra participant fails, ask a room manager to remove it; do not replace the saved token.
+
+Where the browser keeps a saved identity (a trusted-local server or an E2E channel) and a manager removed it, a new code join checks that saved credential. Only an explicit server response that it is inactive, unknown, or no longer matches permits the newly admitted personal identity to replace it. Network errors or ambiguous authentication failures preserve the saved identity and report the problem. Reloading alone does not delete it.
 
 ### From an agent or CLI
 
@@ -233,6 +240,8 @@ A code-created member has room-scoped access, not a channel-wide grant. It canno
 Channel and room membership remain distinct. Check the target scope before member removal or restoration. Code expiry/revocation does not remove an existing member. A removed identity must not be reactivated by a new browser presenting a code.
 
 Trusted-local is host authentication, not permission to impersonate another browser's member. Keep your own saved member token; there is no automatic shared-local identity recovery.
+
+On a South server a browser names your own membership of a server-encrypted channel with `x-chatv3-member-id` instead of a member token. The server accepts it only for your own active membership in the verified tenant; the membership's role and room grants remain its only authority, and South roles or permissions add none. Another person's, an unbound, a removed or an E2E membership gets one answer: 403 with `chatv3_member_not_bound`. A member token and a selector on one call must name the same membership.
 
 ### 5.3 Loose reference bindings
 
@@ -406,7 +415,7 @@ Check these in order:
 5. Confirm the intended session owner, store and encryption mode. A room code only supports server-encrypted rooms.
 6. Inspect the smallest CLI help and live hosted schema if the installed version lacks the command.
 
-Do not use shared-local recovery or another browser's token to bypass admission. A missing browser session needs a fresh admission, not impersonation of the old name.
+Do not use shared-local recovery or another browser's token to bypass admission. A missing browser session needs a fresh admission, not impersonation of the old name. On a South server a server-encrypted channel needs no browser session: sign in, and it opens with your own identity. If such a channel stays locked, your account holds no human membership in it (an agent's does not count) or it was removed; ask a room manager for a code. A channel shown as unavailable could not verify your identity; reload to try again.
 
 Never log member tokens, room codes, advanced invites, wrap secrets, epoch keys or server keyring material while diagnosing.
 
@@ -428,27 +437,12 @@ live `--help` before use.
 
 #### 10.1.1 Overview
 
-This guide is a public AOPS asset and a composable Docman document. Its
-canonical development record lives in `slug:aops`, group `domain-guides`, with
-tags `public`, `asset`, `user-guide`, `chatv3`, and `composable`.
+This guide is a public AOPS asset.
 
 Public access to this operational guide does not make the ChatV3 source code or
 restricted packages open source and does not grant package, hosting, or source
 access. The `LICENSE` and `NOTICE` files shipped with the ChatV3 source remain
 the controlling access terms.
-
-After a new version is published:
-
-```bash
-aops doc index build --document-version-id <docver-id> --json
-aops doc summary build --document-version-id <docver-id> --json
-aops doc search --document-version-id <docver-id> \
-  --q "listen exit 22" --remote --json
-aops doc answer --document-version-id <docver-id> \
-  --q "How should an agent recover from a cursor gap?" --remote --json
-aops doc mirror pull --project-slug aops --document-slug chatv3-user-guide \
-  --apply --json
-```
 
 Repository mirrors under `.aops-cache/docman/**` are read-only caches. Never
 hand-edit them as canonical truth.

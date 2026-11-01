@@ -1,9 +1,9 @@
 ---
 name: aops-cli-discuss
-version: 4
-description: "Use when an AI agent runs a standalone server-canonical AI discussion topic with aops-cli: the design-decision ritual (independent research, two-agent turn protocol, kind=final-stance, deterministic conclude outputs), slug-first selectors, and JSON-driven stop-state reads. discuss = the decision/consensus surface only; coordinate/wake via aops-cli-chat, track review + execution truth via aops-cli-projectman. Thin discipline guide; canonical mechanics live in .aops-cache/docman/domain-guides/agentspace-user-guide.md and command --help."
+version: 5
+description: "aops discuss, decisions: run a standalone server-canonical AI discussion topic with aops-cli: the design-decision ritual (independent research, two-agent turn protocol, kind=final-stance, deterministic conclude outputs), slug-first selectors, and JSON-driven stop-state reads. discuss = the decision/consensus surface only; coordinate/wake via aops-cli-chat, track review + execution truth via aops-cli-projectman. Thin discipline guide; canonical mechanics live in the installed Agentspace User Guide and command --help."
 metadata:
-  supersedes: "v2"
+  supersedes: "v4"
   short-description: "AOPS CLI standalone discuss / decision-ritual guide"
   tags:
     - cli
@@ -42,13 +42,12 @@ Participant roles for any discussion — initiator/driver, peer, primary, review
 | CLI guard flags, sync, hosted mirror mechanics | `aops-cli-core` |
 | Document graph authoring/search | `aops-cli-docman` |
 | Memory / project / prompt / resource / skill assets | `aops-cli-agentspace` |
-| File snapshots / diff / restore | `aops-cli-fileman` |
 
 ## Canonical sources (authoritative)
 
 When this skill is silent, ambiguous, or out of date, **defer to these**:
 
-1. `.aops-cache/docman/domain-guides/agentspace-user-guide.md` — semantics for discuss topics, turns, the decision ritual, and loop discipline. Reference sections by name (numbers drift), e.g.:
+1. The installed Agentspace User Guide (`agentspace-user-guide.md` in the folder `aops assets status --json` reports as `userGuidesRoot`) — semantics for discuss topics, turns, the decision ritual, and loop discipline. Reference sections by name (numbers drift), e.g.:
    - "Coordination semantics (loop discipline and exit codes)" (search: exit code, loop discipline, wait, self-wakeup)
    - "Coordination semantics (review-request reply pairing)" (search: review-result, projectman.review-request, discussion-topic ref)
    - "Anti-patterns appendix" (search: anti-patterns, lifecycle, decision ledger)
@@ -137,11 +136,11 @@ A concluded decision does **not** propagate anywhere by itself. Surface it expli
 - **To a chat room** — bind the topic so the room shows where the decision lives (rooms are FLOW, not the decision ledger):
 
   ```bash
-  aops-cli chat binding add --room-id <id> --binding-type agentspace.discussion-topic \
-    --ref-id <topic-uid> --title "<decision>" --created-by <agent> --apply --json
+  aops-cli chat binding add --session <your-session-id> --room <room> \
+    --binding-type agentspace.discussion-topic --ref-id <topic-uid> --title "<decision>" --json
   ```
 
-This replaces the retired `collab start --from-discuss` / conclude-writeback path. There is no implicit promotion into memory either — write a memory item with a `agentspace.discussion-topic` source-ref if the decision is durable (see `aops-cli-agentspace`).
+There is no implicit promotion into memory either — write a memory item with a `agentspace.discussion-topic` source-ref if the decision is durable (see `aops-cli-agentspace`).
 
 ## Slug-first selector contract
 
@@ -153,7 +152,7 @@ This replaces the retired `collab start --from-discuss` / conclude-writeback pat
 
 - **Agentspace User Guide** by document title + **section name** + keywords (not bare numbers): "Coordination semantics (loop discipline and exit codes)" (search: exit code, wait, loop discipline), "Coordination semantics (review-request reply pairing)" (search: discussion-topic ref, review-result), "Anti-patterns appendix" (search: decision ledger, lifecycle), "Troubleshooting" (search: ready-to-conclude, open question block).
 - **Help is canonical:** `aops-cli discuss --help`, then `aops-cli discuss start|turn|wait|status|conclude|list|follow-up|fork|lineage|loop-prompt|digest|abandon --help`.
-- **Doc discovery ladder** (section-focused reading, no id needed): `aops-cli doc scope search --project-slug aops --q "<keyword>" --local --json`, then targeted `aops-cli doc search --document-version-id <docver-id> --q "<keyword>" --local --json` and `aops-cli doc outline get --document-version-id <docver-id> --json`. There is no `aops-cli docman … --slug` command — use the ladder; reference sections by title + section name + keywords, not bare numbers.
+- **Doc discovery ladder** (section-focused reading, no id needed): `aops-cli doc scope search --project-slug <slug> --q "<keyword>" --local --json`, then targeted `aops-cli doc search --document-version-id <docver-id> --q "<keyword>" --local --json` and `aops-cli doc outline get --document-version-id <docver-id> --json`. There is no `aops-cli docman … --slug` command — use the ladder; reference sections by title + section name + keywords, not bare numbers.
 - **Tool Input Schema:** before authoring `--data`/`--input`/`--patch` payloads for any hosted write, fetch the live JSON Schema first (`aops-cli agent schema --tool <domain>.<operation>`). Full explanation in `aops-cli-core` (Tool Input Schema section).
 
 ## Top anti-patterns

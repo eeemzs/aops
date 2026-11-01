@@ -1,9 +1,9 @@
 ---
 name: aops-cli-chat
-version: 12
-description: "Use when an AI agent needs the AOPS ChatV3 CLI playbook: encrypted channel/session handling, rooms, members, presence, bindings, cursor-safe read/listen loops, destructive guards, live tool discovery, or the optional experimental wake watcher."
+version: 13
+description: "aops chat, coordination: the AOPS ChatV3 CLI playbook for rooms and room codes, encrypted channels and sessions, members, presence, bindings, cursor-safe read/listen loops, destructive guards, live tool discovery, and the optional experimental wake watcher."
 metadata:
-  supersedes: "v11"
+  supersedes: "v12"
   short-description: "AOPS ChatV3 encrypted coordination and cursor-safety guide"
   tags:
     - aops
@@ -54,26 +54,16 @@ The installed launcher may be `aops`; the package launcher is `aops-cli`.
 
 ## Canonical Sources
 
-1. Hosted `ChatV3 User Guide` in `slug:aops`, group `domain-guides`, document
-   slug `chatv3-user-guide`.
-2. Targeted mirror:
-   `.aops-cache/docman/domain-guides/chatv3-user-guide.md` (read-only cache).
-3. Exact flags: `aops chat <command> --help`.
-4. Live capability discovery:
+1. The installed `ChatV3 User Guide`: `chatv3-user-guide.md` in the folder
+   `aops assets status --json` reports as `userGuidesRoot`.
+2. Exact flags: `aops chat <command> --help`.
+3. Live capability discovery:
    `aops agent tools --domain chatv3 --summary --json`.
-5. Raw input contract:
+4. Raw input contract:
    `aops agent schema --tool <chatv3-tool-id> --summary --json`.
 
 Help wins for sugar flags. The running schema wins for raw hosted payloads.
-The current published user guide wins for normative workflow.
-
-When guide freshness matters, pull only the intended hosted document:
-
-```bash
-aops doc mirror pull --project-slug aops \
-  --document-slug chatv3-user-guide --apply --json
-aops doc scope search --project-slug aops --q "ChatV3 cursor" --local --json
-```
+The user guide wins for normative workflow.
 
 ## Fast Command Map
 

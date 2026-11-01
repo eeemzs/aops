@@ -1,10 +1,9 @@
 ---
 name: aops-cli-operator-brief
-version: 4
-description: "Use when an AI agent needs to summarize AOPS PM, memory, discussion, or collab history in plain non-technical language for an operator asking what happened, what works, what was decided, or what remains open."
+version: 5
+description: "A plain-language status brief: summarize AOPS PM, memory, discussion, or collaboration history in non-technical language for a person asking what happened, what works, what was decided, or what remains open."
 metadata:
-  prompt-ref: "prompt:aops-operator-status-brief"
-  supersedes: "v2"
+  supersedes: "v4"
   short-description: "Plain-language AOPS status summary guide"
   tags:
     - aops
@@ -20,7 +19,7 @@ metadata:
 
 Use this skill when the operator asks for a plain-language status summary of a mentioned AOPS subject: a task, sprint, board, memory thread, discussion topic, (historical) collab session, bug, feature, or "what did we do earlier?" style request.
 
-The canonical reusable prompt is `prompt:aops-operator-status-brief`. Use that prompt's source priority and output rules.
+This skill carries its own read order and output rules below; it needs nothing else. When your project keeps a reusable status-brief prompt of its own, you may use it as well, but follow this skill when the two disagree.
 
 ## Read Order
 
@@ -36,8 +35,8 @@ The canonical reusable prompt is `prompt:aops-operator-status-brief`. Use that p
    - handoff or resume checkpoint
    - kickoff
 4. Read session records only after PM/memory gives the right ids:
-   - `aops-cli discuss get <id> --json`
-   - Historical collab session records, if any, are read-only files under `.aops-cache/agentspace/collabs/**` (the `aops-cli collab get` command is retired — read the files directly).
+   - `aops-cli discuss get --id <topic-slug> --json`
+   - Historical collab session records, if any, are read-only files under `.aops-cache/agentspace/collabs/**`; read the files directly.
 5. Read review issues, feedback, commit summaries, logs, or browser proof only when they answer the operator's exact question.
 
 ## Briefing Discipline
@@ -55,13 +54,13 @@ The canonical reusable prompt is `prompt:aops-operator-status-brief`. Use that p
 
 ## Output
 
-Use short Turkish bullets. Prefer sections like:
+Use short bullets in the user's language. Prefer sections like:
 
-- Genel durum
-- Kullanici gozuyle ne yapildi
-- Calisiyor muydu
-- Kararlar
-- Kalanlar
-- Kaynaklar
+- Overall status
+- What was done, from the user's point of view
+- Does it work
+- Decisions
+- What is left
+- Sources
 
 Avoid long technical explanations unless the operator explicitly asks.

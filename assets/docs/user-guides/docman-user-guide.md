@@ -1,5 +1,7 @@
 # Docman User Guide
 
+_Release Notes:_ Covers what the installed AOPS ships; examples use <slug> for your project slug.
+
 ## 1 Agent fast path
 
 ### 1.1 Overview
@@ -59,18 +61,11 @@ The hosted operator playbook for Docman is the `aops-cli-docman` skill.
 | Need | Canonical source |
 |---------|------------------|
 | exact command flags | `aops-cli doc --help` and nested help surfaces |
-| document graph semantics | this file and `architecture.md` |
+| document graph semantics | this guide |
 | operator guard/playbook | hosted `aops-cli-docman` |
-| published/searchable projection | `slug:aops` hosted Docman current version |
-| public distribution copy | `aops/assets/docs/user-guides/docman-user-guide.md` |
+| installed copy | `docman-user-guide.md` in `userGuidesRoot` (`aops assets status --json`) |
 
-Development authoring truth is the `slug:aops` Docman record on AOPS's
-canonical server. The repository-local `USER_GUIDE.md` is a source-parity and
-domain-development reference; `.aops-cache/docman/**` is a read-only mirror/cache.
-When preparing a public release, materialize the published/current Docman
-version into the physical asset file. Public assets are consumed as files on
-user machines; do not automatically import every global public asset into each
-user's canonical Docman server.
+`.aops-cache/docman/**` in a repository is a read-only mirror of server documents.
 
 ## 3 Core model
 
@@ -192,7 +187,7 @@ aops-cli doc update \
   --group-id <group-id> \
   --status published \
   --visibility internal \
-  --project-name eops \
+  --project-slug <slug> \
   --apply \
   --json
 
@@ -201,7 +196,7 @@ aops-cli doc version create \
   --version <next-version> \
   --status published \
   --init-mode clean \
-  --project-name eops \
+  --project-slug <slug> \
   --apply \
   --json
 
@@ -230,11 +225,11 @@ aops-cli doc page create \
   --json
 
 aops-cli doc outline get --document-version-id <docver-id> --json
-aops-cli doc index build --document-version-id <docver-id> --project-name eops --json
-aops-cli doc summary build --document-version-id <docver-id> --project-name eops --json
+aops-cli doc index build --document-version-id <docver-id> --project-slug <slug> --json
+aops-cli doc summary build --document-version-id <docver-id> --project-slug <slug> --json
 aops-cli doc search --document-version-id <docver-id> --q "top thin bar" --ensure summary --json
 aops-cli doc answer --document-version-id <docver-id> --q "How should panels work?" --ensure summary --json
-aops-cli doc mirror pull --group-uid <group-uid> --out-dir .aops-cache/docman --target markdown --project-name eops --apply --json
+aops-cli doc mirror pull --group-uid <group-uid> --out-dir .aops-cache/docman --target markdown --project-slug <slug> --apply --json
 ```
 
 When one Markdown file needs a heading-graph import, use the dedicated import
@@ -663,10 +658,10 @@ Mirror pull:
 
 ```bash
 aops-cli doc mirror pull \
-  --group-uid eops-ui \
+  --group-uid <group-uid> \
   --out-dir .aops-cache/docman \
   --target markdown \
-  --project-name eops \
+  --project-slug <slug> \
   --apply \
   --json
 ```

@@ -1,6 +1,6 @@
 # Agentspace User Guide
 
-_Release Notes:_ Replaces stale Turkish and retired hosted-chat material; adds current memory, experience, playbook, skill discovery, agent-profile, activity, and Discuss semantics.
+_Release Notes:_ Covers what the installed AOPS ships; examples use <slug> for your project slug.
 
 ## 1 Ownership model
 
@@ -266,9 +266,9 @@ The current server-first contract is intentionally explicit:
 an operator-addressed open question, `21` when the topic is terminal or ready
 to conclude, and `22` on timeout.
 
-Discuss does not replace ChatV3 wake traffic. When another agent must act, send
-a short `aops chat` message containing the canonical topic, turn, PM, or review
-reference. ChatV3 foreground listen uses its own contract: `0` for delivered
+Discuss does not wake the other agent. When it must act, send a short message
+where it works, in its tmux session or the aops chat room, with the canonical
+topic, turn, PM, or review reference. ChatV3 foreground listen uses its own contract: `0` for delivered
 work and `22` for a quiet bounded interval. Use the ChatV3 skill and guide for
 room, session, receipt, and cursor behavior.
 
@@ -299,7 +299,7 @@ count or a tool-id inventory.
 Use Docman retrieval rather than scanning every document:
 
 ```bash
-aops doc scope search --project-slug aops \
+aops doc scope search --project-slug <slug> \
   --q "Agentspace memory checkpoint" --local --json
 aops doc search --document-version-id <version-id> \
   --q "structured discussions" --local --json
@@ -379,6 +379,5 @@ aops agent schema --tool <agentspace-tool-id> --summary --json
 | Structured decision and consensus | `aops discuss` and the `aops-cli-discuss` skill |
 | Tasks, sprints, issues, and review truth | `aops pm` and the `aops-cli-projectman` skill |
 | Versioned documents and retrieval | `aops doc` and the `aops-cli-docman` skill |
-| File snapshots and lineage | `aops agent tools --domain fileman` and the `aops-cli-fileman` skill |
 
 <!-- aops-generated:agentspace-discovery:end -->

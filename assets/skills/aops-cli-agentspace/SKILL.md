@@ -1,9 +1,9 @@
 ---
 name: aops-cli-agentspace
-description: "Use when an AI agent needs the AOPS CLI Agentspace playbook for token-efficient memory and resume, checkpoints and summaries, experience and playbooks, reusable hosted assets, agent profiles, activity, or structured discussions."
+description: "aops mem, memory: the AOPS CLI Agentspace playbook for token-efficient memory and resume, kickoff, checkpoint, decision, blocker and handoff notes, session summaries, experience and playbooks, reusable hosted prompts and skills, agent profiles, activity, and structured discussions."
 metadata:
-  version: "30"
-  supersedes: "v29"
+  version: "31"
+  supersedes: "v30"
   short-description: "AOPS Agentspace memory, knowledge, assets, and discuss guide"
   tags:
     - aops
@@ -51,28 +51,14 @@ aops skill ask --q "<what the agent needs>" --limit 3 --json
 
 ## Canonical Sources
 
-1. Hosted `Agentspace User Guide` in project `slug:aops`, group
-   `domain-guides`, document `agentspace-user-guide`, current v20
-   `9c805e63-3372-4a8c-a3dc-adfa5d4b8577`.
-2. Targeted read-only mirror:
-   `.aops-cache/docman/domain-guides/agentspace-user-guide.md`.
-3. Public release source:
-   `assets/docs/user-guides/agentspace-user-guide.md`.
-4. Exact flags: `aops <family> <command> --help`.
-5. Live discovery:
+1. The installed `Agentspace User Guide`: `agentspace-user-guide.md` in the
+   folder `aops assets status --json` reports as `userGuidesRoot`. Search it for
+   the section you need instead of reading it whole.
+2. Exact flags: `aops <family> <command> --help`.
+3. Live discovery:
    `aops agent tools --domain agentspace --q "<capability>" --limit 20 --summary --json`.
-6. Raw input contract:
+4. Raw input contract:
    `aops agent schema --tool <agentspace-tool-id> --summary --json`.
-
-When freshness matters, pull only the intended guide and search its mirror:
-
-```bash
-aops doc mirror pull --project-slug aops \
-  --document-slug agentspace-user-guide --apply --json
-aops doc scope search --project-slug aops \
-  --q "Agentspace <topic>" --local --json
-aops view doc-page agentspace-user-guide#<section-slug> --max-bytes 6000
-```
 
 ## Retrieval Ladder
 

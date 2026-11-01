@@ -1,152 +1,53 @@
 ---
 name: aops
-version: 13
-description: "Use when an operator or AI agent needs to discover which AOPS CLI family skill applies — project planning, hosted missions, working disciplines, durable memory, document graph, file snapshots, multi-agent coordination, read-only cockpit views, hosted skill/prompt authoring, agent profiles, or board lifecycle. This skill is a thin router/index over the aops-cli-* skill family and AOPS working-discipline skill; load the matching family skill afterwards. Triggers: 'aops', 'aops-cli', 'AOPS overview', 'which aops skill', 'aops cli surface', 'plan in aops', 'aops mission', 'aops discipline', 'aops memory', 'aops discuss', 'aops chat', 'aops docman', 'aops fileman'."
+version: 16
+description: "AOPS skill index: which AOPS skill to load for aops pm (project management), aops mem (memory), aops doc (documents), aops chat (coordination), aops discuss (decisions), working disciplines, read-only views and plain-language status briefs. Start new work with aops-interactive. Triggers: 'aops', 'which aops skill', 'aops pm', 'aops mem', 'aops doc', 'aops chat', 'aops discuss'."
 metadata:
-  supersedes: "v12"
+  supersedes: "v15"
 ---
 
 # AOPS skill index
 
-AOPS (Agentic Operations System) is the operator plane that coordinates planning, hosted missions, working disciplines, durable memory, documents, files, multi-agent coordination, cockpit views, and skill/prompt authoring through the `aops-cli` command surface. Domain ownership lives in the underlying domains (`projectman`, `agentspace`, `docman`, `fileman`, etc); `aops-cli` exposes the operator sugar.
+AOPS (Agentic Operations System) keeps an agent's work on an AOPS server: plans and reviews (aops pm), memory notes (aops mem), versioned documents (aops doc), coordination rooms (aops chat) and decision topics (aops discuss). Agents use the `aops` command; people follow the same records in the Cockpit, at the server address with `/ui`.
 
-This skill is a **thin router/index**. It does not carry workflow detail — it points to the family-specific skill that does. Load the matching `aops-cli-*` skill once you identify the right family; that family skill points to the relevant hosted Docman mirror or domain guide plus the live `aops-cli <command> --help`.
+This skill is a **thin index**. It names the skill that carries the workflow; load that skill next.
 
-> Override priority across the AOPS skill family: `--help` wins over skill text (canonical command surface); domain user guide wins over skill text (canonical normative content). Searchable principles: AOPS Docman document `aops-doc-skill-system-principles` (slug:aops, search by title + section name + keywords).
+- `--help` wins over skill text for commands and flags; the user guides win for workflow.
+- Board and room closeout belong to the user. End a turn with a checkpoint or handoff, not with closeout.
 
-> Closeout policy: board closeout is operator-controlled. Agents should not auto-run `pm board closeout` or closeout memory just because a turn is ending; use resume/handoff/checkpoint context until the operator explicitly requests or approves closeout.
+## Starting work
 
-## First contact: explain AOPS and choose the session shape
+When a user starts a task with AOPS, says only "use AOPS", or does not know AOPS yet, load **`aops-interactive`**. It runs a short kickoff interview (project, aops pm, aops mem and aops doc defaults, working alone or with a second agent, review requests, discuss topics) and then continues with the skills below. When the request already answers those questions, go straight to the matching skill.
 
-When the operator says only “use AOPS”, or the agent cannot infer the intended
-workflow, start with a short orientation. If the request already names the task
-and working style, proceed without asking the same questions again.
+## Which skill for what
 
-AOPS is an agentic helper and control plane. Its most-used capabilities are:
+| Need | Skill |
+|---|---|
+| Kickoff interview; how to use AOPS | `aops-interactive` |
+| aops pm: boards, tasks, sprint plans, small steps, issues, feedback, review requests and results | `aops-cli-projectman` |
+| aops mem: kickoff, checkpoint, decision, blocker and handoff notes; experience, prompts, skills | `aops-cli-agentspace` |
+| aops doc: versioned documents, sections and pages, search, publish | `aops-cli-docman` |
+| aops chat: rooms, room codes, messages, presence | `aops-cli-chat` |
+| aops discuss: a decision topic with independent turns and a recorded consensus | `aops-cli-discuss` |
+| Working alone: the solo rhythm and its review requests | `aops-working-disciplines` |
+| Working with a second agent, in tmux or an aops chat room | `aops-collaborative-work` |
+| Read-only views of plans, memory and documents | `aops-cli-view` |
+| A plain-language status brief for a person | `aops-cli-operator-brief` |
+| Command conventions: targets, guard flags, schemas, the raw tool fallback | `aops-cli-core` |
 
-- `aops doc`: create, version, publish, and read documents. Canonical document
-  truth is always the server; local Docman files are generated mirrors.
-- `aops mem`: write durable memory notes for kickoff, checkpoint, resume/handoff,
-  decisions, blockers, rules, and session summaries. Every memory note has a
-  concise human-readable title.
-- `aops pm`: plan and track work with a board, a sprint, or both; microtasks,
-  issues, feedback, review requests, and review results keep execution truthful.
-- Other supported families cover chat, Discuss, files, Tasker/Runner,
-  read-only cockpit views, profiles, prompts, skills, and artifacts. Hosted
-  missions are distribution-dependent: use them only if live CLI/tool discovery
-  exposes that capability. Discover
-  them with this index, the canonical AOPS documents, and the smallest relevant
-  `aops <family> --help`. Offer to produce a more detailed capability map when
-  the operator wants one.
+## Records on the server, mirrors on disk
 
-For material work, Docman, memory, and Projectman are the normal control
-surfaces: Docman owns versioned knowledge, memory carries durable session
-context, and Projectman owns plan/status/review truth. The default discipline is
-solo. Collaboration is optional.
+- The AOPS server holds the truth: plans, memory notes, discussion topics, documents, prompts and skills. Write them through `aops` commands.
+- `.aops-cache/**` in a repository is a read-only mirror of server records. Never edit it as truth; refresh it with `aops sync pull --apply --hosted-project-slug <slug> --json` (prompts and skills) or `aops doc mirror pull --project-slug <slug> --apply --json` (documents).
+- Before a hosted write you have not done before, read its input schema: `aops agent schema --tool <domain>.<operation> --summary --json`.
 
-When the operator has not chosen a session shape, ask only what they want to
-achieve in this session and whether they prefer solo work or collaborative work.
-In collaborative work, the operator may assign `implementer-driver` and
-`reviewer` roles. If the agent runtime supports terminal sessions, peers can run
-in specifically named tmux sessions; otherwise use a hosted chat room. The
-operator can follow the room and project state at `http://127.0.0.1:5900`. For a
-broad or costly design fork, the implementer may open a standalone Discuss topic
-before implementation, bind the accepted decision into an AOPS plan, and ask the
-reviewer to approve that plan. Simpler work may use only PM and memory, or leave
-normal PM review requests for another agent to evaluate later. Discuss and live
-collaboration are never implied merely because AOPS is in use.
+## User guides
 
-## Discovery: which family for what
-
-### aops-cli-core
-
-The CLI core operator playbook: help-first command discovery, the guard flag conventions (`--preview`, `--apply`, `--confirm`, `--idempotency-key`, `--json`), the canonical operator family map (`init`/`setup`/`auth`/`host`/`agent`/`api`/`sync`/`view`), local cache vs. hosted server routing, and the raw hosted-invoke fallback when sugar is missing. **Load this skill first** when you are unsure about CLI guard semantics, sync mechanics, or how to escape from missing sugar to `agent invoke`. It also carries the canonical Tool-Input-Schema discovery block the other family skills point to. Canonical: `.aops-cache/docman/aops-guides/aops-cli-user-guide.md`.
-
-### aops-cli-discuss
-
-Standalone decision / consensus: `discuss` durable decision topics, the design-decision ritual (independent research → ≥4 substantive turns → `kind=final-stance` per agent), the two-agent turn protocol, and deterministic `conclude` outputs. There is **no automatic decision bridge** — surfacing a decision to PM or chat is explicit. **Load this skill** when running a server-canonical design decision or peer consensus before implementation. Canonical: `.aops-cache/docman/domain-guides/agentspace-user-guide.md` (Coordination semantics + Anti-patterns appendix + Troubleshooting sections).
-
-### aops-cli-chat
-
-Coordination / wake: hosted Agentspace rooms and DMs, members and roleKey vocabulary, reference bindings, messages, and `inbox`/`listen`/`catchup` read cursors. Rooms are FLOW (coordination + wake), not the decision ledger. **Load this skill** when coordinating peers, posting a review-request wake, or running a catch-up loop. Canonical: `.aops-cache/docman/domain-guides/agentspace-user-guide.md` (Coordination semantics). For review-request/result, re-review, and operator-approved closeout truth, use `aops-cli-projectman`.
-
-### aops-cli-projectman
-
-Planning truth (server-canonical): `pm board/ktask/sprint/utask/issue/feedback/handoff` CRUD, atomic board lifecycle (`kickoff`/`resume`/operator-approved `closeout`), sprint phase + microtask plan patching, status derivation, subject-aware handoff, and the PM-vs-Agentspace ownership boundary. **Load this skill** when creating or moving kanban tasks, building or completing sprints, opening issues/feedback, or running board windows from kickoff/resume through operator-approved closeout. Canonical: `domains/projectman/USER_GUIDE.md`.
-
-### aops-cli-mission
-
-Distribution-dependent hosted mission discipline and its boundary with Projectman plans and Agentspace memory. Check `aops mission --help` before using the family; if it is unmounted, use `aops plan get`, `aops pm resume`, memory, and live `aops agent tools` discovery instead. **Load this skill** only when a hosted mission operation is exposed in the current distribution; never assume `start --resume` or mission lifecycle commands from the skill text alone.
-
-### aops-working-disciplines
-
-AOPS execution discipline routing: solo-pm-loop, build-review-chat, and design-first-consensus; how each maps to mission policy, Projectman review requests/issues, Agentspace memory, standalone discuss consensus, ChatV3 coordination, and closeout guardrails. **Load this skill** when selecting or interpreting a working discipline, reviewing `aops-cli start` discipline policy output, planning build-review-chat slices, or applying the closeout checklist without running operator-only board/room closeout.
-
-### aops-cli-agentspace
-
-Agentspace context and reusable assets: durable memory (`mem write/list/update/synopsis/resume/compact/prune/search`), sticky guidance, generated synopsis, experience capture (`exp`), the hosted asset families (`project`/`prompt`/`resource`/`artifact`/`skill`), agent profile metadata, and the activity log read surface. **Load this skill** when writing kickoff/resume/checkpoint memory, operator-approved closeout memory, authoring sticky bootstrap rules, publishing prompt or skill versions, or composing agent profiles for collab `--profile-mount`. Canonical: `.aops-cache/docman/domain-guides/agentspace-user-guide.md` (Entity model + Memory model + Useful commands sections).
-
-### aops-cli-docman
-
-Document graph CRUD-first authoring + retrieval: section/page/page-version/link CRUD sugar, draft-save body edits, status workflow (`draft`/`review`/`published`/`archived`), retrieval helpers (`outline`/`index`/`summary`/`search`/`scope search`/`answer`/`source`), publish flow, and local mirror read fallback. **Load this skill** when targeting a known document node for an edit (prefer CRUD sugar over full mirror push), running search-driven retrieval over saved document versions, or publishing a document version's current pointer. Canonical: `domains/docman/USER_GUIDE.md`.
-
-### aops-cli-fileman
-
-File snapshot, diff, restore, copy, zip, and clean over hosted Fileman targets: target inventory CRUD, immutable snapshot lifecycle, snapshot-vs-snapshot or snapshot-vs-live diff, destructive restore (with explicit guards), non-destructive copy, archive hand-off, and retention pruning. **Load this skill** for snapshotting a file or directory, inspecting drift, restoring a snapshot, or applying retention policy — Fileman is hosted-canonical with no `.aops/fileman/**` mirror. Canonical: `domains/fileman/USER_GUIDE.md`.
-
-### aops-cli-tasker
-
-Insan-first task manager + scenario-first runner: `tasker` (task list/get/create/update/delete + label/checklist/relation/comment + system views like my-work/today/upcoming) and `runner` (tracked execution backed by Projectman subjects, ad-hoc runs, workflow instances, queue workers, ingress). **Load this skill** when pushing a task into the runner queue (`tasker create --enqueue`), inspecting runner run state, or composing a workflow instance — Projectman remains the planning owner; Tasker is human-first execution. Canonical: `domains/tasker/USER_GUIDE.md`.
-
-### aops-cli-view
-
-Read-only local-cache cockpit and hosted-inventory presentation: `view dashboard`, focused subject views (`view sprint/task/board`), Agentspace context views (`view memory/resume/discussions`), Docman/skill/prompt mirror views, hosted project inventory (`view hosted-projects/hosted-inventory`), and `view digest --depth shallow|deep` for handoff context packs. **Load this skill** when you need to inspect repo or hosted state without mutating it; view never syncs, refreshes, or mutates. Canonical: `.aops-cache/docman/aops-guides/aops-cli-user-guide.md` (AOPS markdown view sugar section).
-
-### aops-cli-board-lifecycle (deprecated pointer)
-
-Folded into `aops-cli-projectman` from PR2 onward. Routes agents to the projectman skill for board kickoff/resume/operator-approved closeout, kanban-task and sprint policy, and atomic board windows. Kept as a stable pointer for one release cycle so older prompts and AGENTS references keep working. New task prompts should prefer `aops-cli-projectman` directly.
-
-### aops-cli-sugar-authoring
-
-Thin authoring playbook for **adding or extending sugar CLI commands** on `aops-cli` or `eops-cli` over a hosted domain operation. Identifies the right command surface (commander-based aops-cli vs. argv+registry eops-cli), points to canonical authoring sources, and keeps every new sugar wired to `agent schema --tool <id>` discovery. Use this when the target operation already exists in the kit/host-plugin manifest and you just need to expose or compose it as a sugar.
-
-### aops-cli-tooling-agent (modular index)
-
-Compatibility index for the modular AOPS CLI skill family after the v33 split. Routes agents to the right family skill (`aops-cli-core`, `aops-cli-discuss`, `aops-cli-chat`, `aops-cli-projectman`, etc.) and preserves help-first + hosted-mirror reminders for old prompts. Use when a runtime is missing a family-specific skill and an agent needs the fallback help-first sequence; otherwise prefer the smallest matching family skill.
-
-## How to use this index
-
-1. Identify the family from the table above (e.g. "I need to plan a sprint" → `aops-cli-projectman`).
-2. Load that specific skill with the Skill tool (Claude) or by referencing it in the catalog (Codex).
-3. The family skill points you to its canonical user guide section (by name), its `--help` surface, and the doc discovery ladder for section-focused reading.
-4. When `--help` and skill text disagree, `--help` wins. When user guide and skill text disagree, user guide wins.
-
-## Server-canonical and local cache
-
-- Server-canonical truth: the hosted AOPS server is the source of truth for planning (`projectman`), durable memory (`agentspace.memory-item`), discussion topics (`agentspace.discussion-topic`), and experience. Create, write, and read these through the hosted `aops-cli` surface (`pm`, `mem`, `discuss`, `exp`).
-- Local cache: `.aops-cache/projectman/**`, `.aops-cache/agentspace/memory/items/**`, `.aops-cache/agentspace/discussions/**`, and `.aops-cache/agentspace/collabs/**` are a read-only local cache of server state, refreshed by `sync pull`. Do not treat them as an authoring source or planning truth.
-- Hosted prompt/skill mirrors: `.aops-cache/hosted/prompts/**` and `.aops-cache/hosted/skills/**`; refresh with `aops-cli sync pull --apply --hosted-project-slug aops --json`.
-- Hosted Docman guide mirrors: `.aops-cache/docman/**`; refresh separately with `aops-cli doc mirror pull --project-slug aops --document-slug <slug> --out-dir ./.aops-cache/docman --apply --json`. `sync pull` does not refresh `.aops-cache/docman/**`.
-- Never hand-edit a mirror or cache as canonical truth. Change hosted truth via the hosted CLI (`aops-cli pm|mem|discuss|prompt|skill|doc ...`) and refresh the matching mirror.
-- `--yes` is non-interactive/fail-fast mode for supported commands; do not treat it as a proven fix for an abort unless logs prove that.
-
-## Tool Input Schema discovery
-
-For any hosted write, fetch the live JSON Schema first instead of guessing payload fields: `aops-cli agent schema --tool <domain>.<operation>`. The full explanation lives in `aops-cli-core` (Tool Input Schema section); architecture: slug:aops `tooling-cli-host-plugin-system` (Agent Gateway section, "Tool Input JSON Schema Discovery").
-
-## Deep reading (doc discovery ladder)
-
-Search the guides by content instead of linear reads — pick the rung by what you know:
+The AOPS user guides are installed with these skills. `aops assets status --json` reports their folder as `userGuidesRoot`. Search a project's documents by content:
 
 ```bash
-# broad search across the project's guides (local mirror, no id needed):
-aops-cli doc scope search --project-slug aops --q "<keyword>" --local --json
-# exact search within a known guide version:
-aops-cli doc search --document-version-id <docver-id> --q "<keyword>" --local --json
-# section tree of a known guide version (hosted-only — no local fallback):
-aops-cli doc outline get --document-version-id <docver-id> --json
-# project/sprint memory:
-aops-cli mem search --subject project --id <project-uuid> --json
+aops doc scope search --project-slug <slug> --q "<keyword>" --json
+aops doc search --document-version-id <version-id> --q "<keyword>" --json
 ```
 
-There is no `aops-cli docman … --slug` command — that path does not exist; use the ladder above. Reference guide sections by document title + section name + keywords, never a bare section number.
+Refer to a guide section by the guide's title and the section's name, not by its number alone.

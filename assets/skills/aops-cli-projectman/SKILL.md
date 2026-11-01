@@ -1,9 +1,9 @@
 ---
 name: aops-cli-projectman
-version: 21
-description: "Use when an AI agent needs the AOPS CLI Projectman playbook: server-canonical boards, tasks, sprints, microtasks, issues, feedback, review requests/results/re-reviews, status audit, and PM-bound handoff."
+version: 22
+description: "aops pm, project management: the AOPS CLI Projectman playbook for server-canonical boards, tasks, sprint plans, microtasks, issues, feedback, review requests, results and re-reviews, status audit, and PM-bound handoff."
 metadata:
-  supersedes: "v20"
+  supersedes: "v21"
   short-description: "AOPS CLI Projectman thin discipline guide"
   tags:
     - cli
@@ -40,10 +40,8 @@ wins for raw hosted payloads.
 
 The installed launcher may be `aops`; the package launcher is `aops-cli`.
 
-`--limit` on `pm issue list` and `pm feedback list` requires a CLI build newer
-than `@aopslabs/aops` 0.3.31. Installed 0.3.31 rejects that flag; until the next
-CLI release, omit it or use the repository-built CLI. Their response envelope
-always stores records in `data` alongside `count`, `shown`, and `hasMore`.
+`pm issue list` and `pm feedback list` store records in `data` alongside
+`count`, `shown`, and `hasMore`.
 
 ## Use This Skill For
 
@@ -60,14 +58,10 @@ written knowledge, `aops-cli-agentspace` for durable memory, and
 
 ## Canonical Sources
 
-1. Hosted `Projectman User Guide` in `slug:aops`, group `domain-guides`,
-   document `0683979e-8b57-4632-8f88-e021b19ec70c`, current version
-   `99d3b4f8-c6aa-4ca8-9fe5-4751bc06a3a9`.
-2. Repo mirror:
-   `.aops-cache/docman/domain-guides/projectman-user-guide.md` (read-only).
-3. Domain-development source: `domains/projectman/USER_GUIDE.md`.
-4. Exact flags: `aops pm --help` and the smallest nested `--help`.
-5. Raw tool discovery: `aops agent tools --domain projectman --summary --json`
+1. The installed `Projectman User Guide`: `projectman-user-guide.md` in the
+   folder `aops assets status --json` reports as `userGuidesRoot`.
+2. Exact flags: `aops pm --help` and the smallest nested `--help`.
+3. Raw tool discovery: `aops agent tools --domain projectman --summary --json`
    and `aops agent schema --tool <tool-id> --summary --json`.
 
 When this skill and help disagree, help wins for flags. When this skill and the
@@ -114,12 +108,8 @@ Use the smallest useful surface:
    aops pm status audit --project-slug <slug> --task <task-id> --json
    ```
 
-5. deep guide search:
-
-   ```bash
-   aops doc search --document-version-id 99d3b4f8-c6aa-4ca8-9fe5-4751bc06a3a9 --q "<question>" --json
-   aops doc answer --document-version-id 99d3b4f8-c6aa-4ca8-9fe5-4751bc06a3a9 --q "<question>" --json
-   ```
+5. deep guide reading: search the installed `projectman-user-guide.md` in
+   `userGuidesRoot` for the section you need.
 
 ## Model
 

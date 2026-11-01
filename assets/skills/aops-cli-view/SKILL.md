@@ -1,9 +1,9 @@
 ---
 name: aops-cli-view
-version: 12
-description: "Use when an AI agent needs AOPS CLI presentation/cockpit operator playbook: discovery (read-only local-cache markdown/JSON views + hosted project inventory), selector contract, filter matrix, output controls, and view ownership boundary. Thin discipline guide; canonical mechanics live in .aops-cache/docman/aops-guides/aops-cli-user-guide.md (AOPS markdown view sugar subsection) and command --help."
+version: 13
+description: "Read-only views of plans, memory and documents: the AOPS CLI presentation/cockpit operator playbook for read-only local-cache markdown/JSON views and hosted project inventory, the selector contract, the filter matrix, output controls, and the view ownership boundary. Thin discipline guide; canonical mechanics live in the installed AOPS CLI User Guide (AOPS markdown view sugar section) and command --help."
 metadata:
-  supersedes: "v10"
+  supersedes: "v12"
   short-description: "AOPS CLI local-cache view / cockpit / presentation guide"
   tags:
     - cli
@@ -19,9 +19,9 @@ metadata:
 
 # AOPS CLI View
 
-`aops-cli view ...` is a **read-only presentation cockpit**. Most commands are local-cache and read local `.aops/**/*.md` files. Explicit hosted commands (`hosted-projects`, `hosted-inventory`) call hosted list APIs for inspection only. View **never** syncs, refreshes mirrors, writes cache/index files, or runs domain mutations. Default output is agent/TUI compatible markdown; `--json` returns the same read-model as a stable envelope.
+`aops-cli view ...` is a **read-only presentation cockpit**. Most commands are local-cache and read the markdown files that `aops sync pull` keeps under `.aops-cache/**`. Explicit hosted commands (`hosted-projects`, `hosted-inventory`) call hosted list APIs for inspection only. View **never** syncs, refreshes mirrors, writes cache/index files, or runs domain mutations. Default output is agent/TUI compatible markdown; `--json` returns the same read-model as a stable envelope.
 
-This skill is intentionally not a domain skill: presentation is a CLI-internal cockpit concern. **Canonical view content lives in `.aops-cache/docman/aops-guides/aops-cli-user-guide.md`** (AOPS markdown view sugar subsection); skill text is workflow + filter/selector reference.
+This skill is intentionally not a domain skill: presentation is a CLI-internal cockpit concern. **Canonical view content lives in the installed AOPS CLI User Guide** (AOPS markdown view sugar section); skill text is workflow + filter/selector reference.
 
 ## When to use this skill
 
@@ -37,26 +37,15 @@ This skill is intentionally not a domain skill: presentation is a CLI-internal c
 2. Planning mutations (board/sprint/task/issue/feedback create/update): `aops-cli-projectman`.
 3. Memory/agent-profile mutations: `aops-cli-agentspace`; discuss decision/consensus topics: `aops-cli-discuss`; chat coordination/wake: `aops-cli-chat`.
 4. Document graph CRUD/search/publish: `aops-cli-docman`.
-5. File snapshot/copy/backup: `aops-cli-fileman`.
-6. Tasker / runner orchestration: `aops-cli-tasker`.
 
 ## Canonical sources (authoritative)
 
 When this skill is silent, ambiguous, or out of date, **defer to these**:
 
-1. `.aops-cache/docman/aops-guides/aops-cli-user-guide.md` — canonical CLI operator guide (includes the "AOPS markdown view sugar" section under "`.aops` local cache and sync").
+1. The installed AOPS CLI User Guide — `aops-cli-user-guide.md` in the folder `aops assets status --json` reports as `userGuidesRoot`; it includes the "AOPS markdown view sugar" section under "`.aops` local cache and sync".
 2. `aops-cli view --help` and nested family help (per subcommand) — flag-level detail.
-3. Section-focused reading on the CLI user guide via the doc discovery ladder:
-   ```bash
-   # broad search across the project's guides (local mirror, no id needed):
-   aops-cli doc scope search --project-slug aops --q "view sugar" --local --json
-   # exact search within a known guide version:
-   aops-cli doc search --document-version-id <docver-id> --q "view sugar" --local --json
-   # section tree of a known guide version (hosted-only — no local fallback):
-   aops-cli doc outline get --document-version-id <docver-id> --json
-   ```
-   There is no `aops-cli docman … --slug` command — use the ladder; reference sections by document title + section name + keywords, not bare numbers.
-4. Local-cache views read `.aops/**/*.md`; hosted views read hosted list APIs. **Canonical truth still lives in the originating domain** (Projectman, Agentspace, Docman, hosted server).
+3. Section-focused reading: search the installed guide for keywords such as "view sugar", "filter" or "digest" instead of reading it whole; reference sections by document title + section name, not bare numbers.
+4. Local-cache views read the `.aops-cache/**` mirror; hosted views read hosted list APIs. **Canonical truth still lives in the originating domain** (Projectman, Agentspace, Docman, hosted server).
 
 ## Discovery: which view for what
 
@@ -147,7 +136,7 @@ aops-cli view hosted-inventory --hosted-project <slug> --scope-resolution explic
 ## Always rules (pointers; do not duplicate the rule body here)
 
 1. View is read-only by contract — never mutates, syncs, or refreshes mirrors.
-2. Local-cache view commands read only `.aops/**/*.md`; hosted view commands call only hosted read/list APIs.
+2. Local-cache view commands read only the `.aops-cache/**` mirror; hosted view commands call only hosted read/list APIs.
 3. View does NOT refresh `.aops-cache/hosted/**` or `.aops-cache/docman/**` mirrors; use `aops-cli sync pull` for hosted prompt/skill mirrors and `aops-cli doc mirror pull` for Docman guide mirrors.
 4. Use selectors before guessing UUIDs; if a selector is ambiguous, run a list view first to disambiguate.
 5. Filter flags AND together; empty result emits `No matching records.` fallback (intentional, not an error).
@@ -177,20 +166,7 @@ Documented for awareness; not yet shipped:
 
 ## Deep reading
 
-For section-focused reading instead of full-file linear reads:
-
-```bash
-# broad search across the project's guides (local mirror, no id needed):
-aops-cli doc scope search --project-slug aops --q "view sugar" --local --json
-aops-cli doc scope search --project-slug aops --q "filter" --local --json
-aops-cli doc scope search --project-slug aops --q "digest" --local --json
-# exact search within a known guide version:
-aops-cli doc search --document-version-id <docver-id> --q "view sugar" --local --json
-# section tree of a known guide version (hosted-only — no local fallback):
-aops-cli doc outline get --document-version-id <docver-id> --json
-```
-
-There is no `aops-cli docman … --slug` command — use the ladder; reference sections by document title + section name + keywords, not bare numbers.
+For section-focused reading instead of full-file linear reads, search the installed AOPS CLI User Guide (`userGuidesRoot`) for "view sugar", "filter" or "digest". Reference sections by document title + section name + keywords, not bare numbers.
 
 For flag-level detail per command, always run `--help` first:
 
@@ -207,4 +183,4 @@ aops-cli view memory --help
 aops-cli view discussions --help
 ```
 
-If `--help` and this skill disagree, **`--help` wins** (canonical command surface). If `.aops-cache/docman/aops-guides/aops-cli-user-guide.md` and this skill disagree, **user guide wins**.
+If `--help` and this skill disagree, **`--help` wins** (canonical command surface). If the installed AOPS CLI User Guide and this skill disagree, **user guide wins**.

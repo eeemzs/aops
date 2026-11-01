@@ -1,9 +1,9 @@
 ---
 name: aops-cli-core
-version: 20
-description: "Use when an AI agent needs AOPS CLI core operator playbook: help-first discovery, guard flags, project registry/project selection, partitioned sync, archive lifecycle, server-canonical vs local cache rules, hosted invoke fallback, doc-reading ladder, and schema fallback. Thin guide; .aops-cache/docman/aops-guides/aops-cli-user-guide.md and command --help are authoritative."
+version: 22
+description: "Use when an AI agent needs AOPS CLI core operator playbook: help-first discovery, guard flags, project registry/project selection, partitioned sync, archive lifecycle, server-canonical vs local cache rules, hosted invoke fallback, doc-reading ladder, and schema fallback. Thin guide; the installed AOPS CLI User Guide and command --help are authoritative."
 metadata:
-  supersedes: "v19"
+  supersedes: "v21"
   short-description: "AOPS CLI core operator thin discipline guide"
   tags:
     - cli
@@ -23,7 +23,7 @@ metadata:
 
 `aops-cli` is the operator plane. It routes agents to domain owners; it is not the semantic owner of planning, memory, documents, files, or execution.
 
-This is a thin discipline guide. Deep mechanics live in `.aops-cache/docman/aops-guides/aops-cli-user-guide.md`; exact command shape lives in live `--help`. If this skill conflicts with either, `--help` and the user guide win.
+This is a thin discipline guide. Deep mechanics live in the installed AOPS CLI User Guide; exact command shape lives in live `--help`. If this skill conflicts with either, `--help` and the user guide win.
 
 ## Use This Skill For
 
@@ -36,13 +36,13 @@ This is a thin discipline guide. Deep mechanics live in `.aops-cache/docman/aops
 7. Partitioned sync (read/mirror): `sync --project-slug` and `sync --all-projects`.
 8. Hosted PM archive lifecycle: `archive create`, `archive verify`, `archive delete`, and `archive decommission-check`.
 
-Use the family skills for domain work: projectman for PM (including review-request/result and re-review), agentspace for memory/assets, discuss for decision/consensus, chat for hosted-room coordination/wake, docman for docs, fileman for snapshots, tasker for runner/tasker, view for read-only cockpit surfaces.
+Use the family skills for domain work: projectman for PM (including review-request/result and re-review), agentspace for memory/assets, discuss for decision/consensus, chat for hosted-room coordination/wake, docman for docs, view for read-only cockpit surfaces.
 
 ## Canonical Sources
 
-1. `.aops-cache/docman/aops-guides/aops-cli-user-guide.md`, read by section name/keyword, not by fragile section number.
+1. The installed AOPS CLI User Guide (`aops-cli-user-guide.md` in the folder `aops assets status --json` reports as `userGuidesRoot`), read by section name/keyword, not by fragile section number.
 2. `aops-cli --help`, `aops-cli <family> --help`, and nested `--help`.
-3. Domain user guides: `domains/<domain>/USER_GUIDE.md` for semantic rules.
+3. The installed domain user guides in `userGuidesRoot` for semantic rules.
 4. Hosted prompt/skill truth through `aops-cli prompt|skill ...`; `.aops-cache/hosted/**` is only a mirror.
 5. Hosted Docman guide truth through `aops-cli doc ...`; `.aops-cache/docman/**` is only a mirror.
 6. Repo project registry truth: `.aops/aops.config.json`, inspected with `aops-cli project links list --json`.
@@ -89,11 +89,11 @@ aops-cli agent schema --tool agentspace.memory-item.search-memory-items --summar
 
 Common default: reads need no guard, writes need `--apply`, destructive writes need `--apply --confirm`.
 
-## Local Database Backup And Transfer
+## Server Database Backup And Transfer
 
-Use `aops db --help` and the CLI User Guide's database backup/transfer instructions. These are local Server-machine commands; an API target does not redirect them. Native PostgreSQL and SQLite backups stay separate.
+Backups, restores and the full SQLite → PostgreSQL transfer run on the Server's machine with `aops-server db` (`aops-server db --help`), not with this CLI; an API target does not redirect them. The AOPS Server User Guide (`aops-server-user-guide`) has the procedure. Native PostgreSQL and SQLite backups stay separate.
 
-On a supporting build, `db backup --portable` exports **all SQLite aops data** for PostgreSQL only. Check the installed flag before offering it. Restore requires a compatible prepared PostgreSQL schema, stopped owned Server/Cockpit, explicit `--confirm-data-rewind` and a verified target undo. It replaces all aops-owned rows, preserves the source/foreign data, and leaves services stopped. Keep the bundle and sibling receipt together. No project selection, merge, PostgreSQL-to-SQLite conversion, implicit Connect or restart. An uncertain restore is not success; read its safe recovery result and preserve the undo. Native backup options must not be used to bypass the portable undo requirement.
+`aops-server db backup --portable` exports **all SQLite aops data** for PostgreSQL only. Restore requires a compatible prepared PostgreSQL schema, a stopped Server, explicit `--confirm-data-rewind` and a verified target undo. It replaces all aops-owned rows, preserves the source/foreign data, and leaves the Server stopped. Keep the bundle and sibling receipt together. No project selection, merge, PostgreSQL-to-SQLite conversion, implicit Connect or restart. An uncertain restore is not success; read its safe recovery result and preserve the undo. Native backup options must not be used to bypass the portable undo requirement.
 
 ## Server-Canonical Truth And Local Caches
 
@@ -107,7 +107,7 @@ The hosted AOPS server is the source of truth for planning and Agentspace state.
 Read-only local caches (refreshed by `sync pull`, never an authoring source):
 
 1. `.aops-cache/projectman/**`, `.aops-cache/agentspace/memory/items/**`, `.aops-cache/agentspace/discussions/**`, `.aops-cache/agentspace/collabs/**`: a local cache of server state for offline/read inspection.
-2. `.aops-cache/hosted/prompts/**` and `.aops-cache/hosted/skills/**`: hosted prompt/skill mirrors; refresh after a hosted prompt/skill publish with `aops-cli sync pull --apply --hosted-project-slug aops --json`.
+2. `.aops-cache/hosted/prompts/**` and `.aops-cache/hosted/skills/**`: hosted prompt/skill mirrors; refresh after a hosted prompt/skill publish with `aops-cli sync pull --apply --hosted-project-slug <slug> --json`.
 3. `.aops-cache/docman/**`: Docman guide mirrors; refresh with `aops-cli doc mirror pull ... --apply --json`. `sync pull` does not refresh Docman guide mirrors.
 
 Do not hand-edit a read-only cache or mirror as canonical truth; change hosted truth through the hosted CLI and refresh the cache.
@@ -117,11 +117,11 @@ Do not hand-edit a read-only cache or mirror as canonical truth; change hosted t
 The repo project registry lets one repo bind more than one hosted project so `pm --project-slug <slug>` (and the other family commands) can target the intended hosted project. Authoring is always hosted; the registry only controls selection and where the read-only local cache lives.
 
 ```bash
-aops-cli project link --slug aops --mode local --local-root .aops-cache/projects/aops --apply --json
+aops-cli project link --slug <slug> --mode local --local-root .aops-cache/projects/<slug> --apply --json
 aops-cli project link --slug cockpit --mode hosted-only --apply --json
 aops-cli project links list --json
-aops-cli project migrate-local-root --project-slug aops --local-root .aops-cache/projects/aops --dry-run --json
-aops-cli project migrate-local-root --project-slug aops --local-root .aops-cache/projects/aops --apply --confirm --json
+aops-cli project migrate-local-root --project-slug <slug> --local-root .aops-cache/projects/<slug> --dry-run --json
+aops-cli project migrate-local-root --project-slug <slug> --local-root .aops-cache/projects/<slug> --apply --confirm --json
 ```
 
 Operational facts:
@@ -137,12 +137,12 @@ Operational facts:
 Sync is a read/mirror operation that refreshes the local cache from the hosted server; it is not a PM authoring path. Use project selection when a repo has more than one linked project:
 
 ```bash
-aops-cli sync status --project-slug aops --json
-aops-cli sync diff --project-slug aops --json
-aops-cli sync pull --project-slug aops --apply --json
-aops-cli sync pull --project-slug aops --only projectman --apply --json
-aops-cli sync pull --project-slug aops --only agentspace --apply --json
-aops-cli sync pull --hosted-project-slug aops --only hosted-skills --apply --json
+aops-cli sync status --project-slug <slug> --json
+aops-cli sync diff --project-slug <slug> --json
+aops-cli sync pull --project-slug <slug> --apply --json
+aops-cli sync pull --project-slug <slug> --only projectman --apply --json
+aops-cli sync pull --project-slug <slug> --only agentspace --apply --json
+aops-cli sync pull --hosted-project-slug <slug> --only hosted-skills --apply --json
 aops-cli sync status --all-projects --json
 aops-cli sync pull --all-projects --apply --json
 ```
@@ -158,14 +158,14 @@ Shipped behavior:
 
 ## Archive Lifecycle
 
-Archive is currently documented in `aops-cli-core` rather than a separate skill because the shipped surface is a core CLI cleanup lifecycle over existing Projectman/Agentspace tools. Split it into `aops-cli-archive` only if it grows into a broader domain with its own guide and workflows.
+Archive is a core CLI cleanup lifecycle over existing Projectman/Agentspace tools.
 
 ```bash
-aops-cli archive create --project-slug aops --apply --json
-aops-cli archive verify --manifest .aops/archive/aops/<ts>/manifest.json --apply --json
-aops-cli archive delete --manifest .aops/archive/aops/<ts>/manifest.json --json
-aops-cli archive delete --manifest .aops/archive/aops/<ts>/manifest.json --apply --confirm --json
-aops-cli archive decommission-check --manifest .aops/archive/aops/<ts>/manifest.json --json
+aops-cli archive create --project-slug <slug> --apply --json
+aops-cli archive verify --manifest .aops/archive/<slug>/<ts>/manifest.json --apply --json
+aops-cli archive delete --manifest .aops/archive/<slug>/<ts>/manifest.json --json
+aops-cli archive delete --manifest .aops/archive/<slug>/<ts>/manifest.json --apply --confirm --json
+aops-cli archive decommission-check --manifest .aops/archive/<slug>/<ts>/manifest.json --json
 ```
 
 Shipped behavior:
@@ -184,7 +184,7 @@ Use this ladder when a skill points to docs:
 
 ```bash
 # broad project guide search, local mirror when available
-aops-cli doc scope search --project-slug aops --q "<keyword>" --local --json
+aops-cli doc scope search --project-slug <slug> --q "<keyword>" --local --json
 
 # search within a known saved document version
 aops-cli doc search --document-version-id <docver-id> --q "<keyword>" --local --json
@@ -212,7 +212,7 @@ If the compact summary marks `opaque: true`, or if full schema only exposes a fl
 
 1. Matching sugar `--help`, if sugar exists.
 2. Existing read shape from list/get/detail commands.
-3. Domain `USER_GUIDE.md` and architecture docs.
+3. The installed domain user guides.
 4. `aops-cli agent openapi --domain <domain> --json` or the HTTP detail endpoint `GET /api/agent/tools/{toolId}`.
 5. Source Zod/schema only when authoring direct invoke or debugging a wrapper bug.
 

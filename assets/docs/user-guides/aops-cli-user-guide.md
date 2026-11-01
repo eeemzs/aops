@@ -1,14 +1,18 @@
 # AOPS CLI User Guide
 
+_Release Notes:_ Covers the commands the installed AOPS CLI ships; examples use <slug> for your project slug.
+
 ## 1 Introduction
 
 ### 1.1 Overview
 
 #### 1.1.1 Overview
 
-AOPS CLI is the shared command-line entry point for managing a local or
-self-hosted AOPS server. It resolves project context, provides guarded sugar
-commands, and falls back to the server's live agent-tool catalog when needed.
+AOPS CLI (`aops`) is a client of a running AOPS Server. It selects a Server
+target, resolves project context, provides guarded sugar commands, and falls
+back to the Server's live agent-tool catalog when needed. It never installs,
+starts, migrates or backs up a Server: `aops-server` does that on the Server's
+machine (see the AOPS Server User Guide, `aops-server-user-guide`).
 The AOPS server is canonical for durable Projectman, Agentspace, and Docman
 records; `.aops-cache/**` content in a repository is a refreshable, read-only working
 cache.
@@ -53,39 +57,52 @@ update server state.
 
 #### 3.1.1 Overview
 
-Install one package and open the terminal setup tool:
+On a computer where AOPS is installed, open the AOPS window, or run:
 
 ```sh
-npm install --global @aopslabs/aops
-aops
+aops tui
 ```
 
-The exact Server dependency is included; do not install it separately. The TUI is one System Check page. Choose SQLite for a file on this Server machine (Node.js 22.16 or newer), or enter an existing PostgreSQL connection and TLS privately. The Server URL defaults to `http://127.0.0.1:5900`.
+The TUI is one System Check page. It runs the Server steps (database connection, setup, migration, start and stop) through `aops-server` and the client steps (target and agent assets) through `aops`. Choose SQLite for a file on this machine (Node.js 22.16 or newer), or enter an existing PostgreSQL connection and TLS privately. The Server URL defaults to `http://127.0.0.1:5900`. Fix appears only for an eligible repair; the assets row offers Check/Update; F3 opens the sanitized command history. Minimum terminal size is 96x30.
 
-Use **Test connection** to check the entered settings without selecting them, creating a database, applying migrations or stopping aops. Test failure leaves the current installation unchanged. **Connect** is separate: after confirmation it retests, configures aops on the chosen database, applies eligible aops migrations and starts its services. A new SQLite file is created only by the confirmed setup. Switching databases does not copy or delete your previous data.
+Without the TUI, set up the Server with `aops-server` on its machine first (see the AOPS Server User Guide, `aops-server-user-guide`), then connect this CLI to it:
 
-PostgreSQL must already exist; aops does not install, provision, start, stop, remove or administer its service, databases or roles. SQLite files belong on the Server machine, not a network share or a client computer. Multiple computers connect to that same Server; see the remote-connection section. Secrets never belong in chat, argv or logs.
+```sh
+aops setup init --path 4 --api-base-url http://127.0.0.1:5900 --target-name local --yes --json
+aops setup init --path 4 --api-base-url http://127.0.0.1:5900 --target-name local --apply --yes --json
+```
 
-Configure stays available when checks are healthy. Fix appears only for an eligible repair. Assets and CLI each offer Check/Update; internal prepare/apply is hidden. F3 opens sanitized commands/results. Updates may take 5–10 minutes; do not close the app. After verified update, acknowledge and run `aops` again. Minimum terminal is 96x30.
+Path 4 accepts a loopback HTTP Server URL only. It probes the running Server, saves and selects the named target and installs the bundled agent assets. It never installs, starts, migrates or stops a Server and never reads the Server's database configuration.
 
-Normal setup installs the bundled public agent assets; it does not require or seed a separate server catalog. Backup and restore are available through `aops db`, not a TUI backup page.
+Normal setup installs the bundled agent assets; it does not require or seed a separate server catalog. Secrets never belong in chat, argv or logs.
 
 ### 3.2 Existing Server
 
 #### 3.2.1 Overview
 
-Configure an existing Server URL in the TUI, or use the headless target commands after reading their help:
+A target names the Server this CLI talks to. Read `aops target --help`, then:
 
 ```sh
-aops target add --name remote --api-base-url https://aops.example.com --auth-provider remote-session --tls-policy system-ca --apply
-aops target use remote --apply
-aops auth login --target remote
-aops target doctor remote --json
+aops target add --name work --api-base-url http://127.0.0.1:5900 --apply
+aops target use work --apply
+aops target list --json
+aops target doctor work --json
 ```
 
-Remote identity uses the Server's browser-approved device flow. Community local access remains loopback-only trusted-local. An existing remote Server selection takes priority over an inferred local installation; it does not operate a local database or local services.
+- `trusted-local` (the default) is a Server on a loopback HTTP address of this machine: `localhost`, `127.0.0.0/8` or `[::1]`. The Server trusts this machine; there is no sign-in.
+- `south` is a Server whose users sign in through South: `--auth south --south-url <url> --tenant <uuid>`. Its Server and South addresses are HTTPS, or plain HTTP on exactly `127.0.0.1`, `localhost` or `[::1]`, each written as its origin. Saving any other address as trusted-local is refused with `aops_target_remote_requires_south`.
+- A saved `south` target needs a sign-in on this machine, `aops auth login --target <name>` (section 8). Until then a command that selects it stops with `aops_auth_login_required:<name>` and contacts nothing. `aops target doctor` reads its compatibility and health without a credential.
+- One target is active at a time; `aops target use` switches between, for example, a personal and a work Server. A command's `--api-base-url` selects a Server for that command only, under the same rules.
 
-For SQLite, all clients use the same aops Server over HTTP; they never open or synchronize its database file. Keep that file on the Server machine. A company-hosted Server uses the remote-session flow above. Alternatively, an operator-managed SSH tunnel can forward a local loopback port to the Server's loopback port; aops does not create the tunnel. Trusted-local access remains loopback-only. Configure/Test the exact forwarded origin, then Save it. Do not expose trusted-local directly on a public network.
+```sh
+aops target add --name team --api-base-url http://127.0.0.1:15961 --auth south --south-url https://auth.example.com --tenant <tenant-uuid> --use --apply
+aops auth login --target team
+aops pm board list --project-id <project-uuid> --json
+```
+
+A south-oracle Server listens on loopback only in this release (AOPS Server User Guide, section 2.4). From another machine, an operator-managed SSH tunnel forwards a local loopback port to the Server's loopback port, as in the example; aops does not create the tunnel. A trusted-local Server can be reached the same way and saved as a trusted-local target. Never expose a trusted-local Server directly on a network.
+
+With SQLite, every client uses the same Server over HTTP; clients never open or synchronize its database file.
 
 ## 4 `init`
 
@@ -98,49 +115,23 @@ skeleton in the current repository. It does not create hosted
 Projectman/Docman records. Read `aops init --help` for current options and write
 guards before applying it.
 
-## 5 `setup server-env`
+## 5 Server administration
 
 ### 5.1 Overview
 
-#### 5.1.1 Database setup, backup and transfer
+#### 5.1.1 Overview
 
-Prefer the TUI Database Configure dialog for private input. Choose PostgreSQL or SQLite. PostgreSQL accepts Form or Connection string input; only its password is masked. TLS is `require`, `verify-full`, or explicit unencrypted `disable`. SQLite uses an absolute file path on the aops Server machine and requires Node.js 22.16 or newer.
+Installing the Server, saving its database connection, migrations, start and stop, updates, backups and restores run on the Server's machine with `aops-server`, not with this CLI:
 
-**Test connection** checks the draft only. It never saves/selects it, creates or migrates a database, or stops services. It reports success or a specific safe error in the dialog. Reading an active SQLite WAL database may create coordination sidecars, but Test does not modify its application data or choose it for aops. Unsupported or foreign databases are rejected.
+```sh
+aops-server env --help
+aops-server setup init --help
+aops-server migrate --help
+aops-server status --json
+aops-server db --help
+```
 
-**Connect** separately warns about interrupting connected agents, retests the draft, stages a private candidate configuration and runs the selected setup. Old databases remain intact. If a candidate is rejected before effects, installed readiness stays unchanged; if setup fails before switching profiles, aops attempts to recover exactly the previously active services and reports any recovery failure. Connect does not transfer any data. The explicit SQLite → PostgreSQL transfer below is a separate operation.
-
-For headless setup, read `aops setup server-env --help` and `aops setup init --help` for private environment/file inputs and preview/apply controls. Never echo secret configuration. Normal setup needs no catalog opt-out flag.
-
-Use `aops db backup` for a verified backup of the selected backend and `aops db list` to inspect it. SQLite uses an online consistent backup; restore requires the owned aops services to be stopped and explicit data-rewind confirmation. PostgreSQL and SQLite backup formats are not interchangeable. Native backups are restored to their own backend. The only cross-backend direction is the explicit full SQLite → PostgreSQL flow below.
-
-### Full SQLite → PostgreSQL transfer
-
-Use a CLI whose `aops db backup --help` includes `--portable`; a published guide does not mean an older installed binary has the feature. Run these local database commands on the relevant aops Server machine. `--instance` and `--data-root` select its local installation; a remote API target does not redirect database lifecycle commands.
-
-1. Stop the source aops Server for the final handoff, so no writes arrive after the snapshot. Run `aops db backup --portable --json` with that SQLite installation selected. It preserves a verified native SQLite snapshot and returns a portable `backup.bundleDirectory` and `backup.receiptPath`.
-2. Keep the containing transfer directory intact: `bundle/` plus sibling `receipt.json`. It contains every project's data and the ChatV3 keyring; keep it private. If moving machines, copy this whole directory privately to the target Server machine. Do not copy a live SQLite file alone.
-3. Configure/Connect the operator-provided PostgreSQL target separately using its private connection and TLS. This may prepare eligible aops migrations; transfer itself never runs migrations. Verify that the target is current and compatible. Existing target aops data will be replaced, not merged. There is no project/domain selection.
-4. Stop the target aops Server. With that PostgreSQL installation selected, run `aops db restore --backup <transfer-directory>/bundle --confirm-data-rewind --json`. It validates the complete schema, values and target constraints, takes a verified target undo, then replaces only all aops-owned rows in one transaction. It never uses CASCADE, rewrites source data, repairs invalid references, switches profiles or restarts services. Foreign data stays outside the replacement.
-5. Inspect the result. Success includes `services: stopped`, `connectionChanged: false`, row counts, weak-orphan counts and `undo.bundleDirectory`. Start aops Server explicitly when ready and verify actual PM, memory, documents and encrypted chat. Keep the source and undo until that readback succeeds.
-
-`aops db list` and `aops db which` report eligible local backups for the selected backend. Portable bundles are ineligible for SQLite. List eligibility verifies bytes/contract; target schema and stopped ownership are checked again on restore. Prefer an explicit path for transfer, not a guessed newest backup.
-
-Undo uses the same command on the same compatible PostgreSQL target: stop its aops services and run `aops db restore --backup <undo.bundleDirectory> --confirm-data-rewind --json`. A new verified undo is always mandatory; there is no skip-undo option. PostgreSQL now uses a first-party owned-set bundle. Older dump files are preserved but not accepted by db restore or server restore; latest selection skips them.
-
-Missing/incompatible schema, invalid JSON/types, UUID case-twin uniqueness conflicts and hard foreign-key orphans are rejected before replacement. Existing weak orphans are preserved and counted. On failure, read the safe error and recovery result: `targetState: unchanged` means no committed replacement; `unknown` (for example a lost COMMIT acknowledgement) is not success or a proven rollback. Keep services stopped and inspect/recover with the reported verified undo rather than blindly repeating the command.
-
-No PostgreSQL portable export, PostgreSQL → SQLite transfer, append/upsert, selected-project import or automatic backend switch is available. Backup/restore remains CLI-only; the one-page TUI is unchanged.
-
-### PostgreSQL backup and restore
-
-Run `aops db backup --json` on the Server machine. Keep the returned backup directory and its `receiptPath` together. The selected Server reads all aops-owned data directly; no separate PostgreSQL client executables are needed. Use a CLI whose help describes a first-party PostgreSQL bundle; this guide does not add that support to an older installed binary.
-
-To restore, stop aops Server, then run `aops db restore --backup <backup-directory> --confirm-data-rewind --json`. The target must already have the current compatible aops schema and the same PostgreSQL major as the backup. All aops data is replaced, not merged. A verified undo is taken first; unrelated tables are preserved. Verify the result before explicitly restarting services. `aops server restore` follows the same rules.
-
-Ordinary restore does not downgrade migrations. Recovery for an interrupted application update is a separate exact-update operation; follow its diagnostic and `aops server restore db --help`. Do not substitute a normal restore or repeat an uncertain operation blindly. The legacy `host database dump` command family is a separate explicit administration tool, not the aops backup method or an automatic fallback.
-
-When crossing from a legacy two-service installation, first prepare retained browser Chat recovery using the packaged UPGRADING.md. Then use the verified old owning CLI to stop its old Cockpit and Server. Preserve the database and browser profile; new Server lifecycle commands refuse a live or uncertain legacy owner. Open /ui on the configured Server origin after health succeeds.
+The AOPS Server User Guide (`aops-server-user-guide`) describes each step, including the full SQLite → PostgreSQL transfer and backup and restore. From a client, `aops host health`, `aops host diagnostics` and `aops host database status` read the selected Server without changing it. Never put database URLs or passwords in command arguments.
 
 ## 6 Local and remote access
 
@@ -148,7 +139,7 @@ When crossing from a legacy two-service installation, first prepare retained bro
 
 #### 6.1.1 Overview
 
-Local Community setup uses trusted-local on loopback and does not ask for a first administrator. Existing Server authentication is configured on the selected remote service; use `aops auth login --target <name>` and target/auth readback. Do not attempt local identity bootstrap or database administration as a setup repair.
+Local access is trusted-local on a loopback address; it needs no sign-in and asks for no first administrator. A Server whose users sign in through South needs a `south` target (section 3.2) and a sign-in (section 8); without one the CLI does not contact it. Do not attempt local identity bootstrap or database administration as a setup repair.
 
 ## 7 User management
 
@@ -156,7 +147,21 @@ Local Community setup uses trusted-local on loopback and does not ask for a firs
 
 #### 7.1.1 Overview
 
-The public CLI has no generic `aops user` family. Local Community is trusted-local; user/role administration belongs to the selected identity-owning remote service, not a local setup step. Use `aops auth --help` for login/session actions and live discovery for capabilities actually exposed by that service. Access changes require explicit authority.
+The public CLI has no `aops user` family; `aops auth` signs this CLI in to a `south` target (section 8). Local access is trusted-local.
+
+Applies to: the project roles release (P1–P2), since AOPS CLI 0.3.55 and AOPS Server 0.2.41. Earlier Server builds keep their existing behaviour.
+
+On a south-oracle Server, South provides user identity, tenant membership and application authority; AOPS keeps projects and their members. Two independent things decide a project call: the capabilities South grants the user in the tenant, and the user's role in the target project (`admin`, `write` or `read`). An operation needs both: the capability it requires and, in that project, the role the capability asks for. A South role such as `admin` grants no project by itself, and a project's `ownerId` records who created it and grants nothing: access comes from the membership row.
+
+- Projectman operations of a project need `projectman.read`, `projectman.write` or `projectman.admin`, and the role `read`, `write` or `admin` there.
+- Project list and get show the projects the user is a member of; with `agentspace.project.admin`, every project of the tenant.
+- The members of a project and its name and description need `agentspace.project.manage` and the role `admin` in the project. For members only, `agentspace.project.admin` stands in for the role (rescue), and such a write is recorded as rescue. It never opens Projectman content or the project's name.
+- Creating a project needs `agentspace.project.create`. The creator becomes the project's first `admin` (section 16.3).
+- Every other operation answers `403 aops_south_operation_closed`.
+
+`aops project member` (section 16.2) manages members. The AOPS Server User Guide, section 2.5, has the capability and role tables and the refusals.
+
+Use live discovery for the capabilities the selected Server actually exposes. Access changes require explicit authority.
 
 ## 8 Login and tokens
 
@@ -164,10 +169,27 @@ The public CLI has no generic `aops user` family. Local Community is trusted-loc
 
 #### 8.1.1 Overview
 
-Use `aops auth login|status|logout` for named remote-session targets. Tokens are
-target-bound and stored encrypted; never write them to JSON output, an issue,
-or documentation. Do not create an unnecessary login flow for a trusted-local
-target.
+A trusted-local target needs no sign-in. A `south` target signs in through South with a browser-approved device flow:
+
+```sh
+aops auth login --target team          # shows a South address and a code; approve them in the browser
+aops auth status --target team --json  # the sign-in, and whether the Server confirms it
+aops auth refresh --target team        # renews the access token
+aops auth logout --target team         # signs out at South first, then removes the sign-in here
+```
+
+- `aops auth login` opens the South page when it can; `--no-browser` prints the address and the code only. Approve the code in your own South browser session, for the target's tenant.
+- South approves the fixed `aops-cli` client for the `aops` application and the `aops-api` audience, with the scope `aops.api offline_access`; no option changes them. A south-oracle Server accepts only this client.
+- The Server confirms the sign-in. After South approves it, `auth login` stores it and reads it back from the Server on the path every command uses: `/api/auth/me` answers, uncached, the user, the South tenant, the client, the application and the audience South verified for the request. A sign-in the Server does not confirm ends at South and is not kept (`aops_auth_session_binding_mismatch`, `aops_auth_session_rejected`, `aops_auth_session_readback_failed`). If South does not confirm that end, the command fails with `aops_auth_login_failed_remote_unconfirmed`; the sign-in may stay active at South until it expires, so sign the device out in your South account. If another sign-in was stored meanwhile by another process, it stays. `auth status` reports a Server answer that names another user, tenant or client as `rejected`.
+- The sign-in names the target's tenant to South. South keeps a device client such as `aops-cli` per tenant, so the same client signs in to each tenant separately. A `south` target without a tenant stops before any request (`aops_auth_profile_tenant_required`): add the tenant to the target, then sign in. Sign-ins made before this keep renewing.
+- The sign-in belongs to one `south` target and is bound to its South address, Server address and tenant. Every request carries `x-tenant-id` with that tenant; a request naming another tenant (`--tenant-id`) is refused before it is sent (`aops_auth_tenant_header_mismatch`). When the target's addresses or tenant change, the sign-in is not used (`aops_auth_target_changed`): sign out, then sign in again.
+- It lasts 30 days by default. Whether it outlives the approving browser's sign-out is the `aops-cli` client's session setting at South, independent or browser-bound, as the South administrator registered the client. Signing the device out at South ends it; the next renewal is refused (`aops_auth_refresh_rejected`). Then run `aops auth logout`, then `aops auth login`.
+- The Server keeps a positive South decision for at most 30 seconds, so it refuses a revoked sign-in, a suspended membership or a paused application within 30 seconds.
+- While South is unreachable, a decision still in that cache is used until it expires. After that, or without one, the Server refuses with `503 south_oracle_unavailable`. A stale decision is never used, and nothing falls back to trusted-local. `aops auth status` reports an unreachable South and keeps the sign-in.
+- Tokens stay in an encrypted local record whose key is in the OS vault (on Windows, the Credential Manager). On a POSIX host without a vault, `AOPS_CLI_CREDENTIAL_STORE=file` keeps an owner-only key file. Tokens are never printed.
+- `aops auth logout --local-only --confirm` removes the sign-in here without asking South, for example while South is unreachable.
+
+Never write tokens to JSON output, an issue, or documentation.
 
 ## 9 Diagnostics
 
@@ -175,10 +197,7 @@ target.
 
 #### 9.1.1 Overview
 
-Start with the non-mutating `aops doctor`, `aops target doctor <name>`, and
-`aops host health` surfaces. Do not reset, reinstall, or perform database work
-before identifying a fault. Verify the active target, port, and data root
-first.
+Start with the non-mutating client checks: `aops doctor`, `aops target doctor <name>`, `aops auth status` for a `south` target, and `aops host health`. On the Server's machine, `aops-server status`, `aops-server health` and `aops-server logs` show the Server's state. Do not reset, reinstall, or perform database work before identifying a fault. Verify the active target, port, and data root first.
 
 ## 10 Owner model and domain selection
 
@@ -203,14 +222,6 @@ issue, feedback, and review-request records. Read the relevant subcommand's
 `--help` output before making changes. Do not move plan or review truth into a
 room message or local mirror.
 
-## 12 Tasker and Runner routing
-
-### 12.1 Overview
-
-#### 12.1.1 Overview
-
-Use `aops tasker` for human-first kanban board and task writes plus WorkGroup reads, and use `aops runner` for status, event, and artifact reads plus guarded stop, resume, and reconcile controls. Project planning and review remain owned by `aops pm`. For capabilities beyond sugar, use `aops agent tools --domain tasker --summary --json` and `aops agent schema --tool <tool-id> --summary --json`. The canonical workflows and ownership boundary live in the Tasker + Runner User Guide (`tasker-user-guide`); live command help owns exact syntax.
-
 ## 13 `.aops` local cache & sync
 
 ### 13.1 Overview
@@ -223,11 +234,11 @@ Projectman/Agentspace records; the repo registry only records which local
 directory mirrors a hosted project as a read-only cache:
 
 ```bash
-aops-cli project link --slug aops --mode local --local-root .aops-cache/projects/aops --apply --json
+aops-cli project link --slug <slug> --mode local --local-root .aops-cache/projects/<slug> --apply --json
 aops-cli project link --slug demo --mode hosted-only --apply --json
 aops-cli project links list --json
-aops-cli project migrate-local-root --project-slug aops --local-root .aops-cache/projects/aops --dry-run --json
-aops-cli project migrate-local-root --project-slug aops --local-root .aops-cache/projects/aops --apply --confirm --json
+aops-cli project migrate-local-root --project-slug <slug> --local-root .aops-cache/projects/<slug> --dry-run --json
+aops-cli project migrate-local-root --project-slug <slug> --local-root .aops-cache/projects/<slug> --apply --confirm --json
 ```
 
 Contract:
@@ -255,11 +266,11 @@ project registry selector contract. There is no `sync push`: the hosted server
 is canonical, so the cache is only ever pulled, never pushed back.
 
 ```bash
-aops-cli sync status --project-slug aops --json
-aops-cli sync pull --project-slug aops --apply --json
-aops-cli sync pull --project-slug aops --only projectman --apply --json
-aops-cli sync pull --project-slug aops --only agentspace --apply --json
-aops-cli sync pull --hosted-project-slug aops --only hosted-skills --apply --json
+aops-cli sync status --project-slug <slug> --json
+aops-cli sync pull --project-slug <slug> --apply --json
+aops-cli sync pull --project-slug <slug> --only projectman --apply --json
+aops-cli sync pull --project-slug <slug> --only agentspace --apply --json
+aops-cli sync pull --hosted-project-slug <slug> --only hosted-skills --apply --json
 aops-cli sync status --all-projects --json
 aops-cli sync pull --all-projects --apply --json
 ```
@@ -293,11 +304,11 @@ It is deliberately a CLI composition over existing hosted Projectman surfaces,
 not a new hosted archive domain.
 
 ```bash
-aops-cli archive create --project-slug aops --apply --json
-aops-cli archive verify --manifest .aops/archive/aops/<ts>/manifest.json --apply --json
-aops-cli archive delete --manifest .aops/archive/aops/<ts>/manifest.json --json
-aops-cli archive delete --manifest .aops/archive/aops/<ts>/manifest.json --apply --confirm --json
-aops-cli archive decommission-check --manifest .aops/archive/aops/<ts>/manifest.json --json
+aops-cli archive create --project-slug <slug> --apply --json
+aops-cli archive verify --manifest .aops/archive/<slug>/<ts>/manifest.json --apply --json
+aops-cli archive delete --manifest .aops/archive/<slug>/<ts>/manifest.json --json
+aops-cli archive delete --manifest .aops/archive/<slug>/<ts>/manifest.json --apply --confirm --json
+aops-cli archive decommission-check --manifest .aops/archive/<slug>/<ts>/manifest.json --json
 ```
 
 Rules:
@@ -381,10 +392,10 @@ Selector resolution for all commands that accept a `<selector>` argument:
 
 ```bash
 # full UUID
-aops-cli view task 0ea46e18-d717-454d-8244-90ad388c4a80
+aops-cli view task <task-uuid>
 
 # 8+ character ID prefix (the UUID's first 8 characters or the -<8>.md filename suffix)
-aops-cli view task 0ea46e18
+aops-cli view task <uuid-prefix>
 
 # slug
 aops-cli view board ops
@@ -393,7 +404,7 @@ aops-cli view board ops
 aops-cli view sprint "AOPS CLI view follow-up"
 
 # doc-page composite selector (document#heading)
-aops-cli view doc-page tooling-cli-host-plugin-system#runtime-config
+aops-cli view doc-page <document-slug>#<section-slug>
 ```
 
 An ambiguous selector fails and returns a candidate table or JSON payload. If
@@ -579,7 +590,7 @@ Critical rules:
 Startup flow:
 
 1. Run `aops-cli init` for a new repository.
-2. Refresh the read-only hosted-state cache with `aops-cli sync pull --project-slug aops --apply --json`.
+2. Refresh the read-only hosted-state cache with `aops-cli sync pull --project-slug <slug> --apply --json`.
 3. Read `.aops-cache/projectman/views/index.md` and `.aops-cache/agentspace/memory/index.md` for cached context.
 4. When reusable prompt/skill context is needed, read `.aops-cache/hosted/index.md`, `.aops-cache/hosted/skills/index.md`, and `.aops-cache/hosted/prompts/index.md`.
 5. Use `aops-cli pm ...` for PM authoring, `aops-cli mem ...` for memory, `aops-cli exp ...` for agent experience, and `aops-cli discuss ...` for the agent discussion workspace. Each writes directly to the hosted server.
@@ -608,14 +619,6 @@ Phase note:
 
 ### 13.3 Private control root and generated cache layout
 
-## 14 Runner sugar
-
-### 14.1 Overview
-
-#### 14.1.1 Overview
-
-Use top-level `aops runner` for status snapshots, event and artifact reads, and guarded `stop`, `resume`, and `reconcile` controls. Control writes require `--preview` or `--apply` and an idempotency key according to live help. For operations not exposed by sugar, discover Tasker-hosted capabilities with `aops agent tools --domain tasker --summary --json` and inspect exact schemas. Runner owns durable execution; CLI and loop are thin delegates, and separate operator approval remains required for effects.
-
 ## 15 Prompt sugar
 
 ### 15.1 Overview
@@ -638,6 +641,80 @@ registry link. `list|get` reads hosted records; `link` attaches only a verified
 slug to the local registry. For local-root relocation, first run
 `migrate-local-root --dry-run`, then use `--apply --confirm` only for the
 reviewed target.
+
+### 16.2 Project members
+
+#### 16.2.1 Overview
+
+Applies to: the project roles release (P1–P2), since AOPS CLI 0.3.55 and AOPS Server 0.2.41. Earlier Server builds keep their existing behaviour.
+
+`aops project member` manages who belongs to a project and with which role: `admin`, `write` or `read`. The target project is `--project-id`, or `--project-slug` resolved against the Server, or by default the repo-bound project. The command sends only that project's headers, whatever the repo binding is.
+
+```bash
+aops project member list --project-slug <slug> --json
+aops project member list --project-slug <slug> --role admin --user me --limit 50 --offset 0 --json
+aops project member add --project-slug <slug> --user <user-id> --role write --preview --json
+aops project member add --project-slug <slug> --user <user-id> --role write --apply --json
+aops project member set-role --project-slug <slug> --id <membership-id> --role admin --apply --json
+aops project member remove --project-slug <slug> --id <membership-id> --apply --confirm --json
+aops project member inventory --needs-admin --json
+```
+
+Rules:
+
+1. `--user me` is the principal the Server confirms for the current sign-in. Any other user is a user id (a UUID); on a `south-oracle` Server it is the user's South id. Ids are accepted in any letter case.
+2. Writes need `--apply`, and `remove` also needs `--confirm`. `--preview` validates the call without writing.
+3. `set-role` and `remove` read the membership first and refuse a row of another project (`project_member_project_mismatch`) before any write.
+4. Every write prints the Server's readback: the row after `add` or `set-role`, the remaining members after `remove`. When callers demote or remove themselves, the write is applied, but the Server may refuse the read afterwards: `readback.ok` is then `false` with the refusal code, and the write is not undone.
+5. `list` pages with `--limit` and `--offset`, in the order the members were added.
+6. `inventory` is read-only: every project the caller can list, with its member and admin counts. `--needs-admin` keeps the projects without an admin.
+7. The Server keeps at least one admin per project: demoting or removing the last one answers `project_member_last_admin`.
+8. On a `south-oracle` Server the caller needs `agentspace.project.manage` and the `admin` role in the project, or `agentspace.project.admin` (section 7.1.1; the AOPS Server User Guide, section 2.5). `aops project get` and `aops project update` likewise send only the project they are about.
+
+### 16.3 Project creation
+
+#### 16.3.1 Overview
+
+Applies to: the project roles release (P1–P2), since AOPS CLI 0.3.55 and AOPS Server 0.2.41. Earlier Server builds keep their existing behaviour. An earlier Server answers creation on a `south-oracle` target with `403 aops_south_operation_closed`.
+
+`aops project create` creates a project. The Server writes the project, its scope and the creator's `admin` membership together, or nothing. The creator is the signed-in user (on a `south-oracle` Server the South user; on a trusted-local Server the local operator).
+
+```bash
+aops project create --name "Atlas" --slug atlas --description "Shared work" --preview --json
+aops project create --name "Atlas" --slug atlas --description "Shared work" --apply --json
+```
+
+Rules:
+
+1. A create is about no existing project: it sends no project headers, not even the repo-bound project's, and reads no project first. It takes no `--project-id`, `--project-name` or `--scope-id`. The CLI sends the input as `data` only; a Server refuses any other key beside it with `400 project_create_input_forbidden`.
+2. Writes need `--apply`; `--preview` validates the call without writing.
+3. On a `south-oracle` Server the input is `--name`, `--slug` and `--description` only. `--status`, `--visibility` and `--project-type` are refused with `400 south_project_field_forbidden`. Without `--slug` the Server derives one from the name: lower case, accents dropped, every run of other characters one dash. A name that gives no slug is refused with `400 south_project_slug_required`; pass `--slug`.
+4. A slug is unique in the tenant. The CLI sends no idempotency key of its own; the slug protects against a double create.
+
+#### 16.3.2 Results and exit codes
+
+| Answer | Meaning | Exit code |
+|---|---|---|
+| `201` | Created. The JSON result is the project with `membership` (`userId`, `role: admin`). | 0 |
+| `409 project_slug_conflict`, `recovered: true` | Already created by you with the same name and description, and you are still its `admin` (a retry after a lost answer). The CLI prints "Project already created; your admin membership is current." | 0 |
+| `409 project_slug_conflict`, `recovered: false` | The slug is taken. `existing` (project id, name, your role there, whether you created it) is shown only when you are a member of that project. | 1 |
+| any other refusal | As for every command. | 1 |
+
+`--json` prints `result.recovered`, `result.sameRequest` and `result.existing` for a slug conflict. A conflict never changes a role: a creator who is no longer `admin` there gets `recovered: false`.
+
+#### 16.3.3 `--idempotency-key`
+
+The Server does not replay a create for an idempotency key; the slug decides. With a slug, a retry with the same key answers like any retry (section 16.3.2). Without a slug, a trusted-local retry creates a second project.
+
+#### 16.3.4 Records
+
+The Server keeps these records of a create (AOPS Server User Guide, section 2.5.4):
+
+- **A created project:** exactly one activity record, written in the same transaction as the project: the creator, the slug, the Server's request id for the call and the authority mode. A project never exists without it.
+- **A refused or failed create on a `south-oracle` Server:** the Server attempts one event in the tenant South verified, for a create that reached the tool invoke with a valid envelope and was not a preview. When the event cannot be written, the answer says so (`audit.refusal` is `null`) and the result does not change; the record is attempted, not guaranteed. A refusal before the invoke (sign-in, tenant, a closed call), a malformed envelope and a preview get no event.
+- **A refused create on a trusted-local Server:** it keeps the gateway's own record only when the call names a project scope. `aops project create` names none, so its refusals have no such record.
+
+The request id is the Server's own: the CLI sends none, and a retry is a new request. The CLI prints the project or the refusal; the records are read on the Server.
 
 ## 17 Durable memory and synopsis sugar
 
@@ -671,183 +748,91 @@ Rules:
 
 #### 17.2.1 Overview
 
-`discuss`, `chat`, and `pm review-request` are distinct coordination surfaces:
-use `discuss` for decisions/consensus, hosted chat rooms (`chat`) for
-coordination/wake signals, and Projectman (`pm review-request`) for reviews. A
-mismatched writer and listener is the most common cause of silently lost
-traffic; the coordination message and listener must use the same hosted chat
-room. See the `aops-cli-chat` skill.
+`discuss`, `chat`, and `pm review-request` do different jobs:
 
-| Need                                                   | Command                        | Skill            |
-|--------------------------------------------------------|--------------------------------|------------------|
-| Structured decision transcript and final decisions    | `aops-cli discuss start`        | `aops-cli-discuss` |
-| Decision loop for agent order and lifecycle           | `aops-cli discuss wait`, `aops-cli discuss turn`, `aops-cli discuss conclude` | `aops-cli-discuss` |
-| Multi-agent coordination/wake room                    | `aops-cli chat room create`, `aops-cli chat message send` | `aops-cli-chat` |
-| Discover an agent's pending room/message work         | `aops-cli chat inbox --for <agent>` | `aops-cli-chat` |
-| Listen to room traffic or read unread messages        | `aops-cli chat listen`, `aops-cli chat catchup` | `aops-cli-chat` |
-| Request a review, record a result, or re-review       | `aops-cli pm review-request create`, `aops-cli pm review-request result` | `aops-cli-projectman` |
+- `aops-cli discuss` holds decisions: turns, final stances, and conclude outputs (`aops-cli-discuss`).
+- `aops-cli chat` carries coordination and wake messages in an encrypted ChatV3 room (`aops-cli-chat`). `aops-cli chatv3` is a compatibility alias of the same commands.
+- `aops-cli pm review-request` holds reviews, results, and re-reviews when the session uses aops pm (`aops-cli-projectman`).
 
-Coordination (wake signals, room messages, and listeners) lives in hosted chat
-rooms; the decision ritual lives in `discuss`. Write a structured decision or
-stance to the transcript with `discuss turn`/`conclude`. To wake the other
-agent, announce that work with a short `chat message send` in the linked hosted
-chat room. The room message is a wake signal; the Discuss transcript is the
-canonical record. Clarify invitation and listener expectations in the chat
-room. For details, see `aops-cli-chat` (room lifecycle, members, and
-`chat send/listen/catchup`) and `aops-cli-discuss` (decision ritual and
-`discuss wait` exit codes). Review flow (RR/RRR, re-review, and material issues)
-belongs to `aops-cli-projectman`.
+A second agent on the same computer can also work in a tmux session; then that session carries the conversation and no room is needed.
+
+| Need | Command | Skill |
+|---|---|---|
+| Decision topic, turns, and final stances | `aops-cli discuss start`, `aops-cli discuss turn`, `aops-cli discuss wait`, `aops-cli discuss conclude` | `aops-cli-discuss` |
+| Join a room with your own saved session | `aops-cli chat join --code <room-code> --handle <you> --apply` | `aops-cli-chat` |
+| Send a short coordination or wake message | `aops-cli chat send --session <session> --room <room> "<message>"` | `aops-cli-chat` |
+| Read new messages from your saved cursor | `aops-cli chat read --session <session> --room <room> --after-seq <cursor>` | `aops-cli-chat` |
+| Wait for new messages | `aops-cli chat listen --session <session> --room <room> --after-seq <cursor> --timeout-sec 55` | `aops-cli-chat` |
+| Request a review, record a result, or re-review | `aops-cli pm review-request create`, `aops-cli pm review-request result` | `aops-cli-projectman` |
+
+A room or tmux message only wakes the other agent. The Discuss transcript is the record of a decision; with aops pm on, the review request is the record of a review. The writer and the listener must use the same room: a mismatched room is the most common cause of lost messages. `chat listen` exits `0` when messages arrived and `22` on a quiet timeout; mark messages delivered and read only after you processed them (`aops-cli-chat` has the cursor rules).
 
 Slug-first operator contract:
 
-1. `discuss start --slug <slug>` writes the canonical slug to topic frontmatter.
-   If omitted, it is derived from the title and returned as `topicSlug` in
-   JSON. Hosted chat rooms also carry a slug through
-   `chat room create --slug <slug>`.
-2. Selectors now treat the exact slug as the operator-facing default. Legacy
-   folder names and short ids are debug/legacy fallbacks. Use slugs in
-   operator-facing commands, handoffs, and chat pings; keep raw UUIDs out of
-   normal traffic except for debugging or JSON.
-3. If a legacy folder-name or implicit short-id match wins, the JSON envelope
-   returns `cliDeprecationWarnings`. Except during debugging, treat these as a
-   signal to migrate to slugs.
-4. Use `--short-id <8char>` when an explicit debug selector is necessary. This
-   explicit route emits no warning; an implicit short id emits
-   `cliDeprecationWarnings`. If slug/folder/short-id resolution is ambiguous and
-   only one active record exists, `--prefer-active` selects it. Durable
-   handoffs should still store the slug. For Discuss commands, `--short-id` is
-   the topic selector.
-5. Bootstrap a new agent by running `aops-cli chat inbox --for <agent> --json`,
-   then read unread messages in the linked room with
-   `chat catchup --for <agent> --apply --json`. Use
-   `chat listen --for <agent> --max-loops 1 --json` for an active wake and
-   `aops-cli pm review-request list --json` for pending reviews.
-6. `discuss conclude` must not leave `_TBD_` placeholders in `consensus.md`, the
-   agent final stance, `disagreement.md`, or `open-questions.md`. The agent that
-   started the topic owns the output and reviews or enriches these files before
-   finalize/closeout.
+1. `discuss start --slug <slug>` writes the canonical slug to the topic. If omitted, it is derived from the title and returned as `topicSlug` in JSON.
+2. Selectors treat the exact slug as the operator-facing default. Legacy folder names and short ids are debug fallbacks. Use slugs in operator-facing commands, handoffs, and messages; keep raw UUIDs out of normal traffic except for debugging or JSON.
+3. If a legacy folder-name or implicit short-id match wins, the JSON envelope returns `cliDeprecationWarnings`. Treat these as a signal to move to slugs.
+4. Use `--short-id <8char>` when an explicit debug selector is necessary; this explicit route emits no warning. If resolution is ambiguous and only one active record exists, `--prefer-active` selects it. Durable handoffs still store the slug.
+5. A new agent first lists its own saved sessions (`aops-cli chat session list --json`) and reads the room from its saved cursor; with aops pm on, it also lists pending reviews (`aops-cli pm review-request list --status requested --json`).
+6. `discuss conclude` must not leave `_TBD_` placeholders in the consensus, disagreement, or open-questions outputs. The agent that drives the topic owns them and finalizes them.
 
 ### 17.3 PM window, chat-room binding, and active window
 
 #### 17.3.1 Overview
 
-Use one Projectman window for two-agent execution. If a board kickoff already
-exists, reuse that board's active task/sprint by default; create a new task and
-sprint only when no active window exists. The repo-first `collab pm-bind`
-command is retired. Manage the PM window directly with `pm`, and coordinate in
-a hosted chat room bound to the board.
+With aops pm on, two agents share one Projectman window. If a board kickoff already exists, reuse that board's active task and sprint; create a new task and sprint only when no active window exists or the operator opens one on purpose.
 
 ```bash
-aops-cli pm board kickoff --board ops --title "AOPS PM tooling triage" --goal "..." --apply --json
-# Bind the coordination room to the board (wake/flow stays in hosted chat)
-aops-cli chat room create --slug ops-room --title "Ops" --created-by <agent> --apply --json
-aops-cli chat binding add --room-id <room-id> --binding-type projectman.board --binding-id <board-id> --label "Active board" --created-by <agent> --apply --json
+aops-cli pm board kickoff --board <board> --title "<task>" --goal "<goal>" --apply --json
+# When the agents meet in a room, bind the board there; the room only carries coordination
+aops-cli chat binding add --session <session> --room <room> --binding-type projectman.board --ref-id <board-id> --title "Active board" --json
 ```
 
-When explicit task/sprint selection is required, use the relevant
-`pm sprint`/`pm utask` commands. If the operator intentionally opens a new
-window, create a new `pm board kickoff`/sprint. Otherwise, prefer active board
-references instead of creating a duplicate kickoff window.
+Use `pm sprint` and `pm utask` for an explicit task or sprint selection. With aops pm off there is no PM window: the plan and the reviews stay in the conversation with the other agent.
 
 ### 17.4 Two-agent research and deliberation flow
 
 #### 17.4.1 Overview
 
-When the operator asks agents to "discuss," "talk to Claude and propose a
-plan," or "research together," the primary agent should not write a plan alone
-and request review afterward. By default, both parties produce independent
-context and then converge through a Discuss topic for decisions plus a hosted
-chat room for wake signals. Reviews belong in Projectman.
+When the operator asks agents to discuss a decision, research together, or propose a plan together, run a Discuss topic with two real, independent agents. Do not write the plan alone and ask for a review afterwards. `aops-cli-discuss` has the full ritual; the other agent works in a tmux session or meets you in a room, as the session's kickoff chose.
 
-Primary-agent flow:
+Driving agent:
 
-1. Open a decision topic carrying the objective and agents with
-   `aops-cli discuss start --slug <slug>`, and open a linked coordination room
-   with `aops-cli chat room create`.
-2. Put the operator request, repository roots, constraints, and expected
-   deliverables in the topic's first turn or as a context message in the room.
-3. Give the other agent a precise directive through a room message or
-   `pm review-request`: explicitly request independent research, not merely a
-   review of your draft. Expected output should include a current-state map,
-   recommendations, tradeoffs, risks, and open questions.
-4. Announce the directive in the room with `chat message send`. If the other
-   agent must be started manually, tell the operator which room/topic it should
-   listen to.
-5. Research independently in parallel and write your stance to the topic with
-   `discuss turn`.
-6. Announce the decision turn with a short `chat message send` containing the
-   topic id/turn and the review questions for the other agent.
-7. Wait for the decision loop with
-   `aops-cli discuss wait --id <topic> --for <agent> --timeout-sec 540 --interval-sec 5 --json`,
-   and wait for a coordination wake with
-   `aops-cli chat listen --for <agent> --max-loops 1 --json`.
-8. When the response arrives, read the other agent's full `discuss turn` or
-   scratch file, not only the room TL;DR. Write another `discuss turn` for
-   agreements, corrections, pushback, and points that require an operator
-   decision; then ping the room.
-9. If disagreement is material, run one more bounded loop. Do not write a final
-   plan after one room response on architectural or high-impact topics.
-10. Before implementation, complete at least two real-time turns and record the
-    result as a final stance/consensus with `discuss conclude`. Direct
-    implementation followed by review is allowed only when the operator
-    explicitly requests an override/urgent mode, and the override is recorded.
-11. The output is the locked decisions (`discuss conclude`), open operator
-    questions, POC order, and owner/domain boundaries. Write Projectman or
-    Docman records only through explicit commands.
+1. Start the topic with both agents: `aops-cli discuss start --slug <slug> --title "<decision>" --agent <you> --agent <other> --question "<question>" --apply --json`. Put the request, repository roots, constraints, and expected outputs in the first turn.
+2. Ask the other agent, in its tmux session or in the room, for independent research: a current-state map, recommendations, tradeoffs, risks, and open questions, not a review of your draft.
+3. Research on your own and write your stance with `discuss turn`. Wake the other agent where it works with a short message that names the topic and the turn.
+4. Wait with `aops-cli discuss wait --topic <slug> --agent <you> --timeout-sec 540 --interval-sec 5 --json`: exit `0` is your turn, `20` an open operator question (return to the operator), `21` ready to conclude, `22` a timeout (wait again).
+5. Read the other agent's full turn, not only a summary message, and answer with agreements, corrections, and pushback.
+6. Continue until there are at least four substantive turns that are not final stances. Then each agent writes a `final-stance` turn.
+7. Confirm from `aops-cli discuss status --topic <slug> --json` that no final stance is missing, then run `discuss conclude` and finalize the consensus, disagreement, and open questions with no `_TBD_`.
+8. Implementation waits for the concluded topic and, where the repository requires it, for the operator's approval of the consensus. A topic is never concluded on a timeout: when the other agent does not answer, tell the operator and continue other work.
 
-Other-agent flow:
+Other agent:
 
-1. Accept the directive and write a room note saying that research is in
-   progress and a result will follow; advance the read cursor with
-   `chat catchup --apply`.
-2. Research the requested sources independently; do not treat the primary
-   agent's draft as the sole truth.
-3. Write your research/stance with `discuss turn` and provide a short room
-   summary with the topic id/turn.
-4. If the primary agent provides evidence-backed pushback, write another
-   `discuss turn` that states which points you accept, which you maintain, and
-   which you leave to the operator.
+1. Acknowledge the request where you were asked.
+2. Research the requested sources yourself; the driving agent's draft is not the only truth.
+3. Write your research and stance with `discuss turn`, then wake the driving agent where it works with the topic and turn.
+4. Answer evidence-backed pushback with another turn that states which points you accept, which you keep, and which you leave to the operator; finish with your own `final-stance` turn.
 
-Minimum quality gate: both agents contribute at least one independent
-context/research turn, or the primary agent explicitly records the bounded
-timeout and tells the operator that work is proceeding without the other
-response.
+The output is the concluded decision, open operator questions, and the implementation order. Write it into Projectman (with aops pm on) or Docman only with explicit commands.
 
 ### 17.5 ChatV3 product-channel room context
 
 #### 17.5.1 Overview
 
-`aops-cli chatv3` is not a hosted `aops-cli chat` room; it is the encrypted
-product-channel/session CLI. Invite/session/member tokens and room epoch-key
-context operate through the local ChatV3 session store. Use `aops-cli chat` for
-hosted AOPS coordination and `aops-cli chatv3` for active product-room tracking.
+`aops-cli chat` is the ChatV3 command tree: encrypted channels and rooms, agent-owned local sessions, messages, cursors, presence, and bindings. `aops-cli chatv3` is a compatibility alias of the same commands; new work uses `aops-cli chat`. Member tokens and key material stay in the local session store of the agent that joined; use only your own saved session.
 
 Common commands:
 
 ```bash
-aops-cli chatv3 listen --session codex --room general --after-seq <last-seq> --timeout-sec 60 --json
-aops-cli chatv3 binding add --session codex --room general --binding-type projectman.review-request --ref-id <rr-id> --title "Slice review" --json
-aops-cli chatv3 binding list --session codex --room general --json
-aops-cli chatv3 room brief --session codex --room general --for claude --json
-aops-cli chatv3 room summary --session codex --room general --after-seq <last-seq> --json
+aops-cli chat listen --session <session> --room <room> --after-seq <last-seq> --timeout-sec 55 --json
+aops-cli chat binding add --session <session> --room <room> --binding-type projectman.review-request --ref-id <rr-id> --title "Slice review" --json
+aops-cli chat binding list --session <session> --room <room> --json
+aops-cli chat room brief --session <session> --room <room> --for <agent> --json
+aops-cli chat room summary --session <session> --room <room> --after-seq <last-seq> --json
 ```
 
-Rules:
-
-1. `listen` exits with `0` for a new message and `22` for timeout; read/listen
-   output carries `latestSeq` and `caughtUp`.
-2. `binding add/list/remove` stores loose references; it does not alter
-   PM/RR/Docman/Discuss truth.
-3. `room brief` is a read-only onboarding pack containing guidance, members,
-   presence, bindings, cursor references, and recommended next reads.
-4. `room summary` is an agent-composed narrative digest pack. It provides
-   `sourceRef.type=chatv3.room`, a sequence range, `nextReadRefs`,
-   summarization-only `sourceMessages`, and a `memoryWrite` recipe with a
-   `NARRATIVE-DIGEST` slot.
-5. `sourceMessages` is only summarization input and is not copied verbatim into
-   memory. The agent first creates an abstractive narrative digest, then writes
-   the digest, references, and sequence range through an explicit
-   `mem checkpoint` or `mem summary`.
+The ChatV3 User Guide has the room-code, session, cursor, and receipt rules.
 
 ## 18 Resource sugar
 
@@ -881,7 +866,7 @@ If `agent schema` ever returns only a flexible `data` envelope for an Agentspace
 
 #### 19.1.1 Overview
 
-`aops-cli artifact` is hosted metadata for generated or external artifacts. It stores the artifact shell and links to project-scoped refs; it is not the byte store. Use Fileman for filesystem snapshots and artifact records for pointers such as storage paths, report paths, exported archives, screenshots, or generated JSON.
+`aops-cli artifact` is hosted metadata for generated or external artifacts. It stores the artifact shell and links to project-scoped refs; it is not the byte store. Use artifact records for pointers such as storage paths, report paths, exported archives, screenshots, or generated JSON.
 
 Core flow:
 
@@ -906,12 +891,12 @@ Keep artifact content small and pointer-shaped. If the artifact is a repo file, 
 Authoring loop:
 
 ```bash
-aops-cli skill list --hosted-project-slug aops --name "aops-cli-fileman" --json
+aops-cli skill list --hosted-project-slug <slug> --name "<skill-name>" --json
 aops-cli skill inspect --id <skill-id> --json
 aops-cli skill version list --skill-id <skill-id> --json
-aops-cli skill version create --hosted-project-slug aops --skill-id <skill-id> --content '@./SKILL.md' --entry-file SKILL.md --skill-standard aops-skill-v1 --meta '@./meta.json' --apply --json
-aops-cli skill version publish --hosted-project-slug aops --id <skill-version-id> --apply --json
-aops-cli sync pull --apply --hosted-project-slug aops --json
+aops-cli skill version create --hosted-project-slug <slug> --skill-id <skill-id> --content '@./SKILL.md' --entry-file SKILL.md --skill-standard aops-skill-v1 --meta '@./meta.json' --apply --json
+aops-cli skill version publish --hosted-project-slug <slug> --id <skill-version-id> --apply --json
+aops-cli sync pull --apply --hosted-project-slug <slug> --json
 ```
 
 When `--version` is omitted, the CLI resolves the next version from hosted versions. If a publish or create reports a version conflict, use `skill version list`; mirror frontmatter can lag by one version immediately after publish. Hosted authoring does not rewrite global runtime skills. Those change only through a separately prepared and installed public asset release.
@@ -931,44 +916,6 @@ Current operator rules:
 3. Activity logs are useful when proving that a hosted write, invoke, or flow ran with a concrete request/response.
 4. If a dedicated `aops-cli activity ...` command is not present in your runtime, discover the hosted activity surfaces with `aops-cli agent tools --domain agentspace --json` or use the domain guide. Do not invent an activity command from old docs.
 
-## 22 Hosted Fileman usage
-
-### 22.1 Overview
-
-#### 22.1.1 Overview
-
-Fileman is hosted-canonical: there is no `.aops/fileman/**` repo-first mirror. It tracks directory roots, immutable snapshots, file history, diffs, restore/copy/zip handoff, and cleanup.
-
-Actual CLI tree:
-
-```bash
-aops-cli file target track --root-path <directory> --apply --json
-aops-cli file target list --json
-aops-cli file target get --id <target-id> --json
-aops-cli file snapshot create --target-id <target-id> --apply --json
-aops-cli file snapshot list --target-id <target-id> --json
-aops-cli file snapshot diff --from-snapshot-id <id> --to-snapshot-id <id> --json
-aops-cli file snapshot restore --snapshot-id <id> --apply --confirm --json
-aops-cli file snapshot copy --snapshot-id <id> --output-path <dir> --apply --json
-aops-cli file snapshot zip --snapshot-id <id> --output-path <zip> --apply --json
-aops-cli file file history --target-id <target-id> --path <relative-path> --json
-aops-cli file clean --target-id <target-id> --dry-run --apply --json
-```
-
-`target track` expects a directory. To snapshot one file, track its parent directory and address the file by relative path through `aops-cli file file history|get|restore`.
-
-For unfamiliar usage, run the nested help first:
-
-```bash
-aops-cli file --help
-aops-cli file target track --help
-aops-cli file snapshot diff --help
-aops-cli file file history --help
-aops-cli file clean --help
-```
-
-Run `file clean --dry-run` before destructive cleanup and then re-run with `--apply --confirm` only after reviewing the target list.
-
 ## 23 Docman sugar
 
 ### 23.1 Overview
@@ -980,12 +927,12 @@ Run `file clean --dry-run` before destructive cleanup and then re-run with `--ap
 Common flows:
 
 ```bash
-aops-cli doc list --project-slug aops --json
+aops-cli doc list --project-slug <slug> --json
 aops-cli doc version list --document-id <doc-id> --json
 aops-cli doc outline get --document-version-id <docver-id> --titles-only --depth 2 --json
 aops-cli doc page draft-save --page-version-id <pagever-id> --document-link-id <document-section-link-id> --content '@./page.md' --apply --json
 aops-cli doc set-current-version --document-id <doc-id> --version-id <docver-id> --publish-now --apply --json
-aops-cli doc mirror pull --project-slug aops --group-uid aops-guides --document-slug aops-cli-user-guide --out-dir ./.aops-cache/docman --apply --json
+aops-cli doc mirror pull --project-slug <slug> --group-uid <group-uid> --document-slug <document-slug> --out-dir ./.aops-cache/docman --apply --json
 ```
 
 For a known page edit, use clone_all + targeted page/section CRUD. For a whole markdown refresh, use `doc import --from-markdown` with `--baseline`, `--guard-target`, and a `--dry-run` first.
@@ -994,7 +941,7 @@ Retrieval notes:
 
 1. `doc scope search --local` searches the local mirror and can rank source or architecture files above the guide you expected.
 2. `doc search --local` is document-granular and confirms presence; do not assume it returned a full section body.
-3. To read a mirror section, use `aops-cli view doc-page <document>#<number-prefixed-slug>`, for example `aops-cli view doc-page aops-cli-user-guide#27-guard-flag-konvansiyonu`.
+3. To read a mirror section, use `aops-cli view doc-page <document>#<number-prefixed-slug>`, for example `aops-cli view doc-page release-checklist#2-before-the-release`.
 4. `doc outline get --titles-only --depth <n>` is the cheapest structure probe for a known hosted version.
 
 ## 24 Common operator notes
@@ -1028,7 +975,7 @@ aops-cli <family> --help
 aops-cli mem write --mode resume --subject project --durability short --content '@./checkpoint.md' --apply --json
 ```
 
-Use `view` for read-only context, then mutate through the owner family: `pm` for planning, `mem` for durable context, `doc` for documents, `file` for snapshots, `skill`/`prompt` for hosted reusable assets.
+Use `view` for read-only context, then mutate through the owner family: `pm` for planning, `mem` for durable context, `doc` for documents, `skill`/`prompt` for hosted reusable assets.
 
 Do not run closeout commands unless the operator explicitly approves closeout. Ordinary stop points should write resume/handoff memory.
 
@@ -1043,17 +990,20 @@ Runtime skills are loaded from the user-level Codex and Claude homes, not from r
 Routine use:
 
 ```bash
-aops assets status --json
-aops assets install --target all --json
-aops assets update --target all --json
-aops assets rollback --target all --json
+aops assets status --json                 # installed and bundled versions; no network
+aops assets status --check-latest --json  # also the latest published release and what an update would do
+aops assets install --target all --json   # the release bundled with AOPS
+aops assets update --target all --json    # the latest published release, when it is newer
+aops assets rollback --target all --json  # the previous release; no network
 ```
 
-`install` and `update` clean-reinstall only the AOPS-managed paths declared by the current and previous manifests. Assets removed from the new manifest are deleted, unrelated user skills remain untouched, and failures restore the prior working files. After the new install succeeds, the retired `~/.aops/agent-assets` store is removed. A symlink or non-directory at that exact legacy path fails before new asset writes.
+`assets update` reads the published `assets-<version>` releases of the public `eeemzs/aops` repository. It installs the highest one only when it is newer than the installed release, not older than the bundled one, and when this `aops` meets the release's `minCliVersion`; otherwise it changes nothing and says why. Before it installs, it checks that the release's tag, manifest, and archive belong together and match their sizes and SHA-256 digests, and it stops a check or download that takes longer than 45 seconds. The same version with other bytes is an error, whatever its source. `aops assets update --from-release <directory>` installs a reviewed local release instead.
+
+`install`, `update`, and `rollback` replace the skills of the installed and the new release in each runtime they update. A skill that only an older release kept in `~/.aops/assets` carried is removed where the runtime still holds that release's exact files; a skill of your own under that name stays. Unrelated user skills remain untouched, and a failure restores the prior working files. One install, update, or rollback runs at a time, and a release that needs a newer `aops` is refused before anything changes, whatever its source. `install` and `update --from-release` also take `--expect-current <version>` (`none`: no release installed yet): when another release is installed by then, they change nothing and stop with `aops_assets_current_changed:<installed version>`. A lock left by an `aops` that no longer runs is taken over. `aops_assets_install_lock_stuck` means a lock whose owner cannot be read, or a takeover that was itself interrupted: once no `aops` command runs, remove `~/.aops/assets/install.lock` and `~/.aops/assets/install.lock.takeover`, whichever exists, and try again. After the new install succeeds, the retired `~/.aops/agent-assets` store is removed. A symlink or non-directory at that exact legacy path fails before new asset writes.
 
 `~/.aops/assets` stores downloaded releases, current/previous state, and backups. Public releases contain skills, user guides, working disciplines, and roles. The release contract intentionally has no gateway, pointer, receipt, signature, commit identity, or machine identity layer.
 
-After pointer template changes, restart Codex or Claude Code. Hosted content changes usually only need `sync pull`, because the pointer reads the repo mirror at trigger time.
+Start a new Codex or Claude Code session after an install or update so that it loads the new skills.
 
 ## 27 Help-first model
 
@@ -1076,6 +1026,8 @@ Decision chain:
 3. Use `aops-cli agent schema --tool <domain>.<operation> --json` before raw payload authoring.
 4. Use `aops-cli agent invoke --tool <id> --input '@payload.json' --apply --json` only when sugar is absent or broken.
 5. Use `aops-cli api call` only as an explicit low-level escape hatch.
+
+For a host-admitted domain command, optional `cli:v1` metadata can provide a path, aliases, help, schema-bound field flags and defaults. An exact native command leaf wins; valid admitted metadata is next; otherwise the generated command spelling remains available, including for an unknown metadata version. Inspect the live input with `aops agent schema --tool <tool-id>` before a raw invoke. Metadata does not grant access or replace the host's apply/confirm gate. The app CLI owns transport, local files and output.
 
 ## 28 Guard-flag convention
 
@@ -1107,28 +1059,30 @@ local cache; do not treat it as canonical or hand-edit it as truth.
 
 Server-canonical, mirrored as read-only caches:
 
-1. `.aops-cache/projectman/**` caches Projectman boards, tasks, sprints, issues, feedback, and views. Refresh with `aops-cli sync pull --project-slug aops --apply --json`.
+1. `.aops-cache/projectman/**` caches Projectman boards, tasks, sprints, issues, feedback, and views. Refresh with `aops-cli sync pull --project-slug <slug> --apply --json`.
 2. `.aops-cache/agentspace/memory/items/**` caches Agentspace memory. Refresh with `aops-cli sync pull ...`.
 3. `.aops-cache/agentspace/discussions/**` caches discuss topics/transcripts (discuss authoring is hosted). Refresh with `aops-cli sync pull ...`.
-4. `.aops-cache/hosted/prompts/**` and `.aops-cache/hosted/skills/**` mirror hosted Agentspace prompt/skill current versions. Refresh with `aops-cli sync pull --apply --hosted-project-slug aops --json`.
+4. `.aops-cache/hosted/prompts/**` and `.aops-cache/hosted/skills/**` mirror hosted Agentspace prompt/skill current versions. Refresh with `aops-cli sync pull --apply --hosted-project-slug <slug> --json`.
 5. `.aops-cache/docman/**` mirrors hosted Docman documents. Refresh with `aops-cli doc mirror pull ...`.
 
 To change content, write through the owner surface (`aops-cli pm ...`, `aops-cli mem ...`, `aops-cli discuss ...`, `aops-cli doc ...`), then refresh the cache.
 
-## 30 Hosted guide mirror bootstrap
+## 30 Guides and document mirrors
 
 ### 30.1 Overview
 
 #### 30.1.1 Overview
 
-Guide mirrors are Docman-owned, not `sync pull`-owned. Refresh AOPS operator guides with:
+The AOPS user guides are installed with the agent assets; `aops assets status --json` reports their folder as `userGuidesRoot`. Read them there; they need no server.
+
+Your project's own documents are Docman-owned, not `sync pull`-owned. Mirror them with:
 
 ```bash
-aops-cli doc mirror pull --project-slug aops --group-uid aops-guides --document-slug aops-cli-user-guide --document-slug aops-agent-assets-bootstrap --out-dir ./.aops-cache/docman --apply --json
-aops-cli doc mirror pull --project-slug aops --group-uid domain-guides --document-slug agentspace-user-guide --out-dir ./.aops-cache/docman --apply --json
+aops-cli doc mirror pull --project-slug <slug> --apply --json
+aops-cli doc mirror pull --project-slug <slug> --document-slug <document-slug> --out-dir ./.aops-cache/docman --apply --json
 ```
 
-Use `sync pull` for hosted prompts/skills, and `doc mirror pull` for guides/documents.
+Use `sync pull` for hosted prompts/skills, and `doc mirror pull` for documents.
 
 ## 31 Cross-cutting anti-patterns
 
@@ -1145,7 +1099,6 @@ Avoid these:
 5. Assuming `sync pull` refreshes Docman guides.
 6. Running full Docman import for a one-page edit when CRUD ids are known.
 7. Writing closeout memory for an ordinary checkpoint.
-8. Leaving test Fileman targets/snapshots after smoke tests; run `file clean` and remove temp roots.
 
 ## 32 Skill and user-guide search discipline
 
@@ -1157,9 +1110,9 @@ Use the smallest useful read:
 
 ```bash
 aops-cli <family> --help
-aops-cli doc scope search --project-slug aops --q "<keywords>" --local --json
+aops-cli doc scope search --project-slug <slug> --q "<keywords>" --local --json
 aops-cli doc outline get --document-version-id <docver-id> --titles-only --depth 2 --json
-aops-cli view doc-page aops-cli-user-guide#27-guard-flag-konvansiyonu
+aops-cli view doc-page <document-slug>#<number-prefixed-section-slug>
 ```
 
 Search rules:
@@ -1192,20 +1145,26 @@ Use this when a repo needs the standard AOPS task execution or collaborative wor
 
 #### 34.1.1 Overview
 
-Install the complete AOPS public asset release before asking Codex or Claude to use its skills:
+AOPS installs its reviewed agent asset bundle (skills, user guides, working disciplines and roles) for Codex and Claude. Check it, or install it again, before asking an agent to use the AOPS skills:
 
 ```bash
-aops assets install --target all --json
 aops assets status --json
+aops assets install --target all --json
 ```
 
 Destinations:
 
 1. Codex skills: `~/.codex/skills/<skill>/SKILL.md`
 2. Claude skills: `~/.claude/skills/<skill>/SKILL.md`
-3. Release store, user guides, disciplines, and roles: `~/.aops/assets/releases/<version>/files/**`
+3. Local bundle store, user guides, disciplines, and roles: `~/.aops/assets/releases/<version>/files/**`; `aops assets status --json` reports the user guides folder as `userGuidesRoot`.
 
-Use `aops assets update --target all --json` for the latest public GitHub release, or add `--tag <version>` for one exact release. TUI setup/update delegates to these same CLI commands and does not own a second installer.
+`assets install` uses the bundle shipped with AOPS; `assets update` installs a newer published release (26.1). To repair from another reviewed local bundle directory, use:
+
+```bash
+aops assets update --from-release <reviewed-local-directory> --target all --json
+```
+
+The Skills row of the AOPS window (TUI) runs these same commands and does not own a second installer.
 
 ## 35 `start` kickoff composer
 
@@ -1238,7 +1197,6 @@ Frequently used commands:
 ```bash
 aops-cli start --mode solo --board <board> --task "<task>" --json --out tmp/start.md
 aops-cli start --mode chat-room --board <board> --discipline build-review-chat --json
-aops-cli start --resume <mission-id> --mode solo --board <board> --json
 aops-cli start --reminder --task "<current task>" --area <area> --limit 3 --json
 ```
 
@@ -1247,30 +1205,23 @@ Important fields in a ready result:
 1. `result.promptRef.path` / `result.promptRef.sha256` - prompt file and hash.
 2. `result.memoryBrief` - read-only local-cache memory startup pack; `--no-memory-brief` skips it.
 3. `result.sessionGuidance` - layered runtime rules, discipline guardrails, accepted playbooks, ranked experience briefs.
-4. `result.mission.policyJson` - free-form policy seed for mission create/update.
 
 `start --reminder` is not a full kickoff: it asks no questions, does not
 serialize the full starter prompt, and writes no PM, memory, or hosted state. It
 provides a bounded read-only answer to mid-session questions such as "where
 were we, and which rules, playbooks, or experience items apply?"
 
-## 36 Mission and implementation plan
+## 36 Implementation plan
 
 ### 36.1 Overview
 
 #### 36.1.1 Overview
 
-Mission is an Agentspace-owned session anchor; it does not replace Projectman
-task/sprint/RR truth. An implementation plan is a Projectman sprint facade, and
-the plan id is the sprint id.
+An implementation plan is a Projectman sprint facade, and the plan id is the
+sprint id. It does not replace Projectman task, sprint or review truth; it is
+the same record seen as a plan.
 
 ```bash
-aops-cli mission create --objective "<objective>" --policy-json '<json>' --apply --json
-aops-cli mission list --summary --json
-aops-cli mission get --id <mission-id> --json
-aops-cli mission update --id <mission-id> --active-plan <sprint-id> --apply --json
-aops-cli mission resume --id <mission-id> --depth light --limit 8 --json
-
 aops-cli plan create --task <task-id> --name "<plan name>" --goal "<goal>" --apply --json
 aops-cli plan get --id <sprint-id> --json
 aops-cli plan update --id <sprint-id> --phases-json '@tmp/phases.json' --apply --json
@@ -1278,15 +1229,12 @@ aops-cli plan update --id <sprint-id> --phases-json '@tmp/phases.json' --apply -
 
 Rules:
 
-1. Mission stores intent, status, policy, and the active-plan reference.
-2. Tasks, sprint phases/microtasks, issues, feedback, and RR/RRR records belong
-   to Projectman.
-3. Mission resume is compact and token-bounded; use `mission resume --full` for
-   the raw skeleton only when necessary.
-4. `start --resume <mission-id>` combines the starter prompt with the same
-   compact mission pack.
-5. Use `aops-cli pm utask ...` for single-item microtask edits; the plan facade
+1. Tasks, sprint phases/microtasks, issues, feedback, and review requests and
+   results belong to Projectman.
+2. Use `aops-cli pm utask ...` for single-item microtask edits; the plan facade
    is not a second table.
+3. Bind an accepted discuss consensus to the plan with a reference, and get the
+   plan reviewed before implementation.
 
 ## 37 Playbook and experience consult
 
@@ -1361,7 +1309,7 @@ maintained manually; do not edit the marker blocks below by hand.
 
 #### 39.2.1 Overview
 
-> This section is generated from the public Commander program registered by `buildCommunityProgram()`. Do not edit it by hand; regenerate it with `aops docs user-guide`.
+> This section is generated from the public Commander program registered by `buildAopsProgram()`. Do not edit it by hand; regenerate it with `aops docs user-guide`.
 
 #### 39.2.2 Command families
 
@@ -1374,25 +1322,22 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops api` | Direct domain API escape hatch (/api/{domain}/...) |
 | `aops archive` | AOPS archive bundle commands for hosted Projectman graph cleanup preparation |
 | `aops artifact` | Agentspace artifact sugar commands over the hosted AOPS gateway |
-| `aops assets` | Install and update public AOPS skills, guides, disciplines, and roles from one simple release archive |
-| `aops auth` | Authenticate the CLI to a named remote-session target |
+| `aops assets` | Install, update, and roll back the AOPS skills, guides, disciplines, and roles: bundled, local, or the latest published release |
+| `aops auth` | Sign in to a south target through South |
 | `aops bootstrap` | Read the host bootstrap contract |
 | `aops chat` | ChatV3 encrypted channels, rooms, agent sessions, coordination, and foreground listening |
 | `aops chatv3` | Compatibility command tree for canonical `aops chat`. ChatV3 encrypted channels, rooms, agent sessions, coordination, and foreground listening |
 | `aops checkpoint` | Server-first session checkpoint facade over hosted Agentspace memory |
 | `aops codex` | Experimental local agent-runtime integrations for Codex Desktop |
 | `aops config-root` | Print the brand-specific user config root |
-| `aops db` | Operator database surface: full PostgreSQL/SQLite backup, listing and restore |
 | `aops discuss` | Manage hosted (server-first) Agentspace discussion topics |
 | `aops doc` | Docman authoring, retrieval, and publish sugar over the hosted AOPS plane |
 | `aops docs` | Generate AOPS documentation sections from live CLI registrations |
-| `aops doctor` | Run mutation-free, profile-aware CLI/target/local-instance checks |
+| `aops doctor` | Run mutation-free checks of this CLI and the selected server target |
 | `aops exp` (aliases: experience) | Author and read hosted Agentspace experience items (server-first) |
 | `aops health` | Read host health |
-| `aops host` | Host inventory, registration, diagnostics, and admin commands |
-| `aops init` | Initialize repo-local AOPS Community metadata (.aops) |
-| `aops license` | Inspect the public trusted-local license profile; commercial activation is unavailable |
-| `aops loop` | AOPS loop-engineering facade: dry-run readiness, owner-boundary contract, and foreground-listener contract |
+| `aops host` | Read-only health, diagnostics and database status of the selected AOPS Server |
+| `aops init` | Initialize repo-local AOPS metadata (.aops) |
 | `aops mem` (aliases: memory) | Agentspace server-first memory commands (hosted memory-item ops are the source of truth; the local .aops memory tree is never written) |
 | `aops plan` | Sprint-backed Projectman implementation plan commands |
 | `aops playbook` | List reviewed playbooks projected from hosted Agentspace memory rules/constraints (server-first) |
@@ -1400,16 +1345,13 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops project` | Agentspace project sugar commands over the hosted AOPS gateway |
 | `aops prompt` | Agentspace prompt and prompt-version sugar commands over the hosted AOPS gateway |
 | `aops resource` | Agentspace resource sugar commands over the hosted AOPS gateway |
-| `aops runner` | Tasker Loop Runner v2 status and guarded control sugar |
-| `aops server` | Configure and operate a named AOPS Community server instance |
-| `aops setup` | Inspect and bootstrap an AOPS Community installation |
+| `aops setup` | Connect this CLI to an AOPS Server and install the agent assets |
 | `aops skill` | Agentspace skill and skill-version sugar commands over the hosted AOPS gateway |
 | `aops start` | Compose the AOPS Collaborative Startup kickoff prompt from explicit flags |
 | `aops sync` | Server-first sync commands: refresh the read-only local cache of Projectman/Agentspace state plus hosted prompt/skill mirrors |
-| `aops target` | Manage named local or remote AOPS server targets |
-| `aops tasker` | Tasker board, task, and WorkGroup sugar over the hosted AOPS plane |
-| `aops update` | Check, prepare, and apply a guarded global AOPS npm update |
-| `aops version` | Show immutable CLI identity and optional target/runtime context |
+| `aops target` | Manage named AOPS Server targets |
+| `aops tui` | Open the AOPS terminal UI; it installs the bundled agent assets first |
+| `aops version` | Show immutable CLI identity and optional selected target context |
 | `aops view` | Read-only AOPS markdown/JSON presentation views |
 
 #### 39.2.3 `aops activity` commands
@@ -1478,17 +1420,17 @@ maintained manually; do not edit the marker blocks below by hand.
 | --- | --- |
 | `aops assets install` | Install the bundled or selected AOPS asset release |
 | `aops assets rollback` | Restore the previous AOPS asset release and projected skills |
-| `aops assets status` | Show locally installed AOPS asset release state |
-| `aops assets update` | Update from a local release or the public AOPS GitHub release |
+| `aops assets status` | Show locally installed AOPS asset release state; --check-latest also reads the latest published release |
+| `aops assets update` | Install the latest assets release published at eeemzs/aops when it is newer (network), or a local release with --from-release |
 
 #### 39.2.11 `aops auth` commands
 
 | Command | Purpose |
 | --- | --- |
-| `aops auth legacy-export` | Export historical local identity/tenant/role metadata without credentials |
-| `aops auth login` | Login with browser approval and store target-bound encrypted tokens |
-| `aops auth logout` | Revoke the remote session, then remove encrypted credentials for one target |
-| `aops auth status` | Verify the selected target and current authenticated principal |
+| `aops auth login` | Sign in through South in a browser and keep the sign-in for this target |
+| `aops auth logout` | Sign out at South, then remove the sign-in here |
+| `aops auth refresh` | Renew the access token of the sign-in |
+| `aops auth status` | Show the sign-in of the target and whether its Server accepts it |
 
 #### 39.2.12 `aops chat` commands
 
@@ -1595,16 +1537,7 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops codex unregister` | Remove one local ChatV3 member wake registration |
 | `aops codex wake` (aliases: wakeup) | Wake the exact local Codex Desktop session through internal IPC |
 
-#### 39.2.16 `aops db` commands
-
-| Command | Purpose |
-| --- | --- |
-| `aops db backup` | Take and verify all aops data (first-party PostgreSQL bundle or consistent online SQLite snapshot) |
-| `aops db list` | List backups and say which ones a restore will accept |
-| `aops db restore` | Restore a first-party PostgreSQL bundle or SQLite backup. Stop Server first; undo backup is mandatory. |
-| `aops db which` | Print the backup that --latest would choose, without restoring |
-
-#### 39.2.17 `aops discuss` commands
+#### 39.2.16 `aops discuss` commands
 
 | Command | Purpose |
 | --- | --- |
@@ -1623,7 +1556,7 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops discuss turn` | Append one turn to a hosted discussion topic (turn-order enforced server-side) |
 | `aops discuss wait` | Poll hosted status until an agent may write, an operator block appears, or the topic is ready/done |
 
-#### 39.2.18 `aops doc` commands
+#### 39.2.17 `aops doc` commands
 
 | Command | Purpose |
 | --- | --- |
@@ -1692,7 +1625,7 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops doc version list` | List document versions |
 | `aops doc version update` | Update document-version header metadata (status / title / summary / release-notes / label). To switch the canonical current version, use `aops-cli doc set-current-version` instead. |
 
-#### 39.2.19 `aops docs` commands
+#### 39.2.18 `aops docs` commands
 
 | Command | Purpose |
 | --- | --- |
@@ -1714,57 +1647,13 @@ maintained manually; do not edit the marker blocks below by hand.
 
 | Command | Purpose |
 | --- | --- |
-| `aops host config` | Inspect or update the local host-owned env config |
-| `aops host config set` | Write repo target and/or host log level into the local host env file |
-| `aops host config show` | Show repo target and host log level from the local host env file |
-| `aops host database` (aliases: db) | Inspect or mutate the active host database via AOPS db-admin routes |
-| `aops host database backup` | Export or restore hosted database backups |
-| `aops host database backup export` | Export a hosted database backup through the AOPS backup route |
-| `aops host database backup restore` | Restore a hosted database backup through the AOPS restore route |
-| `aops host database dump` | Run PG-native pg_dump / pg_restore against the configured PostgreSQL repo URL |
-| `aops host database dump export` | Write a native PostgreSQL custom dump file with pg_dump |
-| `aops host database dump restore` | Restore a native PostgreSQL custom dump file with pg_restore |
-| `aops host database reset` | Reset hosted database tables and optionally recreate schema |
+| `aops host database` (aliases: db) | Inspect the selected Server database status |
 | `aops host database status` | Load hosted database status (/api/aops/settings/database/status) |
 | `aops host diagnostics` (aliases: plugins) | Inspect host runtime diagnostics (/api/host-admin/plugins) |
-| `aops host explain-registration` | Explain the stored registration manifest and projected host-config fragment |
 | `aops host health` | Smoke the runtime health endpoint (GET /api/health) |
 | `aops host hello` | Smoke the hello endpoint (GET /api/hello) |
-| `aops host register` | Return commercial_profile_required; external domains are disabled in trusted-local |
-| `aops host registrations` | List installed host registrations in the operator registry |
-| `aops host unregister` | Remove an installed host registration |
 
-#### 39.2.22 `aops license` commands
-
-| Command | Purpose |
-| --- | --- |
-| `aops license activate` | Return commercial_profile_required without accepting commercial evidence |
-| `aops license status` | Show the free built-in domain profile |
-
-#### 39.2.23 `aops loop` commands
-
-| Command | Purpose |
-| --- | --- |
-| `aops loop cleanup` | Preview worktree age/eligibility; remove only exact terminal, clean, merged/abandoned targets with --apply --confirm |
-| `aops loop listen` | Show the F4 foreground listener contract; timeout means re-poll |
-| `aops loop maker-run` | Run at most one supervised maker in one approved slice worktree; hosted mode uses one atomic Runner lease |
-| `aops loop models` | List the models each adapter can actually use, or resolve a loose name like "opus 5" to what the adapter calls it |
-| `aops loop pack` | Build an inspectable pre-run loop pack with refs, policy, and role prompts |
-| `aops loop parallel-plan` | Build the F6 parallel/worktree fan-out gate plan without creating worktrees or agents |
-| `aops loop plan` | Build a pass/fail loop readiness and command-contract plan |
-| `aops loop probe` | Probe SDK/CLI adapter readiness without running child agents |
-| `aops loop resume` | Show resume/reconcile contract; never replay guarded writes |
-| `aops loop resume-agent` | Resume a captured Codex or Claude agent session with a new directive; double-gated like start |
-| `aops loop runner-eval` | Evaluate hosted runner/worker v2 boundaries and gaps without hosted mutation |
-| `aops loop session-reconcile` | Show the session lifecycle states, safety brakes, and crash/stale reconcile contract (maps to runner v2 reconcile-state; never replays guarded writes) |
-| `aops loop slice-merge` | Merge one accepted slice branch with ff-only git merge; no child agents or ledger writes |
-| `aops loop start` | Start loop dry-run or one supervised F5 child-agent dogfood run |
-| `aops loop status` | Show stateless F4 loop cockpit with owner refs, cursors, blockers, evidence, and cost/usage actuals |
-| `aops loop stop` | Show stop contract; later runner owner records the actual stop request |
-| `aops loop watch` | Short-lived poll-once/resume-once resume-on-trigger driver; on a qualifying trigger delegates to resume-agent, then exits (no daemon; durable execution belongs to Runner) |
-| `aops loop worktree-init` | Materialize operator-approved isolated worktrees without starting agents or merging |
-
-#### 39.2.24 `aops mem` commands
+#### 39.2.23 `aops mem` commands
 
 | Command | Purpose |
 | --- | --- |
@@ -1787,7 +1676,7 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops mem update` | Advanced: update an existing memory item |
 | `aops mem write` | Advanced: write an Agentspace memory item with standardized metadata |
 
-#### 39.2.25 `aops plan` commands
+#### 39.2.24 `aops plan` commands
 
 | Command | Purpose |
 | --- | --- |
@@ -1796,7 +1685,7 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops plan list` | List sprint-backed implementation plans |
 | `aops plan update` | Patch a sprint-backed implementation plan, including phases and microtasks |
 
-#### 39.2.26 `aops playbook` commands
+#### 39.2.25 `aops playbook` commands
 
 | Command | Purpose |
 | --- | --- |
@@ -1806,7 +1695,7 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops playbook promote` | Promote reviewed experience into a playbook memory rule/constraint |
 | `aops playbook show` | Render one hosted playbook as agent-readable markdown |
 
-#### 39.2.27 `aops pm` commands
+#### 39.2.26 `aops pm` commands
 
 | Command | Purpose |
 | --- | --- |
@@ -1875,21 +1764,27 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops pm utask set-status` | Update only the lifecycle status of a sprint-bound utask |
 | `aops pm utask update` | Patch a sprint-bound utask without replacing the full sprint plan |
 
-#### 39.2.28 `aops project` commands
+#### 39.2.27 `aops project` commands
 
 | Command | Purpose |
 | --- | --- |
-| `aops project create` | Create a project |
+| `aops project create` | Create a project; you become its first admin |
 | `aops project delete` | Delete a project |
 | `aops project get` | Get a project by id |
 | `aops project link` | Link a hosted project slug into the repo project registry |
 | `aops project links` | List repo project registry links |
 | `aops project links list` | List project links from .aops/aops.config.json |
 | `aops project list` | List hosted projects |
+| `aops project member` | Project membership: list, add, set-role, remove and inventory |
+| `aops project member add` | Add a member to a project and print the server readback |
+| `aops project member inventory` | Read-only: every listable project with its member and admin counts |
+| `aops project member list` | List the members of a project |
+| `aops project member remove` | Remove a project member and print the server readback |
+| `aops project member set-role` | Change the role of a project member and print the server readback |
 | `aops project migrate-local-root` | Plan or apply flat .aops projectman/agentspace migration into .aops-cache/projects/<slug> |
 | `aops project update` | Update a project |
 
-#### 39.2.29 `aops prompt` commands
+#### 39.2.28 `aops prompt` commands
 
 | Command | Purpose |
 | --- | --- |
@@ -1908,7 +1803,7 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops prompt version publish` | Publish a prompt version and sync the prompt current version |
 | `aops prompt version update` | Update an existing prompt version |
 
-#### 39.2.30 `aops resource` commands
+#### 39.2.29 `aops resource` commands
 
 | Command | Purpose |
 | --- | --- |
@@ -1918,63 +1813,15 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops resource list` | List reusable resource shells |
 | `aops resource update` | Update a resource |
 
-#### 39.2.31 `aops runner` commands
-
-| Command | Purpose |
-| --- | --- |
-| `aops runner artifact` | Tasker runner artifact reads |
-| `aops runner artifact list` | List artifact refs for a Tasker runner run |
-| `aops runner event` | Tasker runner event reads |
-| `aops runner event list` | List events for a Tasker runner run |
-| `aops runner reconcile` | Request a guarded Tasker runner reconciliation |
-| `aops runner resume` | Resume a Tasker runner run through the guarded control surface |
-| `aops runner status` | Get a Tasker runner status snapshot |
-| `aops runner stop` | Stop a Tasker runner run through the guarded control surface |
-| `aops runner worker` | Tasker runner atomic worker lease operations |
-| `aops runner worker claim` | Atomically claim the next ready slice, or one explicit ready slice with --slice-id |
-| `aops runner worker release` | Atomically release, cancel, or fail one worker lease |
-
-#### 39.2.32 `aops server` commands
-
-| Command | Purpose |
-| --- | --- |
-| `aops server attest-external-snapshot` | Optionally record an operator-owned external PostgreSQL snapshot for one risky migration plan |
-| `aops server backup` | Create and verify all aops data as a first-party PostgreSQL bundle or consistent SQLite snapshot |
-| `aops server backup list` | List existing backups and say which ones restore will accept |
-| `aops server backup-readiness` | Report whether this host can take the backup an update depends on, without mutation |
-| `aops server health` | Check the installed server health without mutation |
-| `aops server lock-status` | Inspect the exact same-instance operation lock without changing it |
-| `aops server logs` | Show recent server logs |
-| `aops server migration-plan` | Read the exact pending native database migration plan without mutation |
-| `aops server operation-status` | Inspect one exact durable operation journal without changing it |
-| `aops server reconcile-operation` | Reconcile one exact interrupted operation under its instance lock |
-| `aops server recover-lock` | Recover one exact stale lock generation proven dead or PID-reused |
-| `aops server reset` | Remove local installation state without deleting PostgreSQL resources |
-| `aops server restart` | Restart the installed server |
-| `aops server restore` | Restore database data; dispatches on the install profile |
-| `aops server restore db` | Restore the installed database for one exact native application update; a verify-only update does not rewind SQLite data |
-| `aops server rollback` | Rollback one native application update |
-| `aops server rollback app` | Rollback one native application update; restore its exact pre-migration snapshot when required |
-| `aops server setup` | Configure and start the local npm Server with PostgreSQL or SQLite |
-| `aops server start` (aliases: up) | Start the installed local npm/source Server |
-| `aops server status` | Show install and runtime status |
-| `aops server stop` (aliases: down) | Stop the server without deleting data |
-| `aops server update` | Update the installed local npm/source Server |
-
-#### 39.2.33 `aops setup` commands
+#### 39.2.31 `aops setup` commands
 
 | Command | Purpose |
 | --- | --- |
 | `aops setup ai` | Print a safe, copy-ready AOPS installation prompt for a terminal AI agent |
-| `aops setup catalog` | Inspect or reconcile the inert signed AOPS official server catalog in the fixed aops-official-catalog scope (server contract: agentspace.official-catalog.reconcile) |
-| `aops setup catalog reconcile` | Preview or apply an append-only reconcile from one verified Community release |
-| `aops setup catalog rollback` | Restore a prior reserved current-version map without deleting history |
-| `aops setup catalog status` | Inspect only the reserved official catalog scope |
 | `aops setup guide` | Print the packaged agent-readable AOPS installation skill |
-| `aops setup init` | Inspect or apply an explicit AOPS installation path |
-| `aops setup server-env` | Create or validate the private PostgreSQL/SQLite/auth env for the npm server |
+| `aops setup init` | Connect this CLI to an existing AOPS Server (path 4) and install the agent assets |
 
-#### 39.2.34 `aops skill` commands
+#### 39.2.32 `aops skill` commands
 
 | Command | Purpose |
 | --- | --- |
@@ -1995,7 +1842,7 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops skill version publish` | Publish a skill version and sync the skill current version |
 | `aops skill version update` | Update an existing skill version |
 
-#### 39.2.35 `aops sync` commands
+#### 39.2.33 `aops sync` commands
 
 | Command | Purpose |
 | --- | --- |
@@ -2007,7 +1854,7 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops sync sidecar` | Run a localhost-bound cockpit sidecar that exposes read-only local cache status/diff on the client machine |
 | `aops sync status` | Show local cache sync state |
 
-#### 39.2.36 `aops target` commands
+#### 39.2.34 `aops target` commands
 
 | Command | Purpose |
 | --- | --- |
@@ -2018,35 +1865,7 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops target show` | Run `aops target show --help` for the current command contract. |
 | `aops target use` | Run `aops target use --help` for the current command contract. |
 
-#### 39.2.37 `aops tasker` commands
-
-| Command | Purpose |
-| --- | --- |
-| `aops tasker board` | Tasker kanban-board commands |
-| `aops tasker board create` | Create a Tasker kanban board |
-| `aops tasker board get` | Get a Tasker kanban board by id |
-| `aops tasker board list` | List Tasker kanban boards |
-| `aops tasker board update` | Update a Tasker kanban board |
-| `aops tasker task` | Tasker task commands |
-| `aops tasker task create` | Create a Tasker task |
-| `aops tasker task get` | Get a Tasker task by id |
-| `aops tasker task list` | Search Tasker tasks |
-| `aops tasker task update` | Update a Tasker task |
-| `aops tasker work-group` (aliases: workgroup) | Tasker WorkGroup read commands |
-| `aops tasker work-group get` | Get a Tasker WorkGroup by id |
-| `aops tasker work-group list` | List Tasker WorkGroups |
-
-#### 39.2.38 `aops update` commands
-
-| Command | Purpose |
-| --- | --- |
-| `aops update apply` | Apply one exact prepared plan with automatic rollback and health verification |
-| `aops update bridge` | Apply an old-CLI plan from an externally launched exact public candidate |
-| `aops update check` | Compare the installed global AOPS closure with the public npm latest tag |
-| `aops update prepare` | Download and verify exact candidate and rollback tarballs without changing the installation |
-| `aops update recover` | Finish one stranded exact plan at its target closure after a failed apply |
-
-#### 39.2.39 `aops view` commands
+#### 39.2.36 `aops view` commands
 
 | Command | Purpose |
 | --- | --- |

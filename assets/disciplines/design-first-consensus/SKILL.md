@@ -10,7 +10,7 @@ Use this discipline when architecture or ownership is uncertain enough that impl
 ## Required assets
 
 - `aops-cli-discuss`
-- `aops-cli-projectman`
+- `aops-cli-projectman` when aops pm is on
 - `aops-collaborative-work`
 - `aops-cli-agentspace`
 
@@ -19,12 +19,12 @@ Use this discipline when architecture or ownership is uncertain enough that impl
 1. Each participant researches code, PM, and canonical documents independently.
 2. Run the Discuss turn protocol and record final stances.
 3. Conclude only with complete consensus/disagreement/open-question outputs.
-4. After operator approval, bind the consensus reference to a Projectman task and sprint plan.
+4. Write the plan with the consensus reference: in a Projectman task and sprint plan when aops pm is on, otherwise in the conversation. Where the repository requires the user's approval of a consensus, wait for it first.
 5. Obtain plan review before implementation, then use bounded reviewed slices.
 
 ## Boundaries
 
-- Discuss owns the decision; Projectman owns the implementation plan and reviews.
-- ChatV3 may coordinate but is never decision truth.
+- Discuss owns the decision. With aops pm on, Projectman owns the implementation plan and reviews; otherwise they stay in the conversation, as `aops-collaborative-work` describes.
+- Two real, independent agents take part; a tmux session or a chat room may coordinate but is never decision truth.
 - No implementation begins from an unconcluded topic or placeholder output.
-- Concrete agent assignments belong to mission/session policy, not this reusable discipline.
+- Concrete agent assignments belong to the session's setup, not this reusable discipline.
