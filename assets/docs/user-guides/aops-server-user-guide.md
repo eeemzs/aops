@@ -1,6 +1,6 @@
 # AOPS Server User Guide
 
-_Release Notes:_ Covers what the installed AOPS ships; examples use <slug> for your project slug.
+_Release Notes:_ TASK-70 macOS: 1.1.1 tells how the app installs on a Mac, what its first start adds and how to remove it by hand (no uninstall command yet); 5.1.1 names the Mac's login item and AOPS app; 8.1.1 explains aops_server_open_saved_database_is_not_sqlite on a developer's computer.
 
 ## 1 Introduction
 
@@ -13,6 +13,12 @@ _Release Notes:_ Covers what the installed AOPS ships; examples use <slug> for y
 Every `aops-server` command has `--help`; the help is the live contract for flags. Add `--json` for machine-readable output. Lifecycle commands accept `--instance <name>` (default `default`) and `--data-root <path>`.
 
 Keep database URLs and passwords out of command arguments, chat, logs and tracked files. `aops-server` reads them from the environment or from its private env file.
+
+The AOPS app installs both programs from one file and needs no Node, npm or administrator rights: `aops-setup-<version>-win32-x64.exe` from aopslabs.com, or `irm https://downloads.aopslabs.com/aops/install.ps1 | iex` in PowerShell, on Windows, the disk image `aops-setup-<version>-darwin-arm64.dmg` from aopslabs.com on a Mac with Apple silicon, and `curl -fsSL https://downloads.aopslabs.com/aops/install.sh | sh` on Linux. It sets the Server up on this computer with a SQLite database and no sign-in, opens the Cockpit in your browser, and updates itself (section 5.1). Its programs stay in their own folder; your data is in `%LOCALAPPDATA%\AOPS\Server` on Windows, `~/Library/Application Support/AOPS/Server` on macOS and `~/.local/share/aops/server` on Linux. The app's `aops-server` takes the commands of this guide; PostgreSQL and South sign-in (sections 2.4, 2.5 and 6.2) need another AOPS installation.
+
+On a Mac, open the disk image and double-click Install AOPS. macOS asks once whether to open an app downloaded from the internet; after Open, the setup asks nothing more and opens the Cockpit. The first start puts AOPS and Stop AOPS in `~/Applications`, a login item that opens AOPS when you sign in (`aops-server autostart on|off|status`), and the `aops` and `aops-server` commands in `~/.local/bin`, with one line in `~/.zprofile` that puts that folder on the PATH of new terminals.
+
+macOS has no uninstall command yet. To remove the app by hand, run `aops-server stop`, `aops-server autostart off` and `aops-server autoupdate off`. Move AOPS and Stop AOPS from `~/Applications`, `aops` and `aops-server` from `~/.local/bin`, and `app`, `Server` and `setup.lock` from `~/Library/Application Support/AOPS` to the Trash; `Server` is your data, with its backups. Then delete the line that ends in `# AOPS: the aops and aops-server commands` from `~/.zprofile`. The skills the app installed for Codex and Claude may stay.
 
 ## 2 Install
 
@@ -367,7 +373,7 @@ The API and the Cockpit share one origin, `http://127.0.0.1:5900` by default; op
 
 #### 5.1.1 Overview
 
-An installed AOPS updates itself. When the Server starts, and once a day while it runs, it checks for a newer version and downloads it. The next start from the Startup entry or the desktop shortcut installs it before the Server starts; the TUI's **Update now** installs a downloaded version at once. Running a newer setup yourself updates the same way.
+An installed AOPS updates itself. When the Server starts, and once a day while it runs, it checks for a newer version and downloads it. The next start from the Startup entry or the desktop shortcut (on a Mac, the login item or the AOPS app) installs it before the Server starts; the TUI's **Update now** installs a downloaded version at once. Running a newer setup yourself updates the same way.
 
 An update whose version needs a data update takes a backup first, applies the data update, and starts the new version. A version that does not start healthy goes back to the earlier one with that backup.
 
@@ -445,6 +451,7 @@ On keyboard layouts that type `@`, `#` or `{` with AltGr, paste such values (Ctr
 - `aops_server_migration_pending`: the database needs a migration; run `aops-server migrate --apply` with the Server stopped, then start it.
 - `aops_server_migrate_requires_stopped_server`: run `aops-server stop` first.
 - `aops_server_migrate_database_missing`: check the configured SQLite path. Use `--create-database` only for a new installation.
+- `aops_server_open_saved_database_is_not_sqlite`: the env file of section 2.1 selects a database that is not SQLite, and the AOPS app runs only on SQLite. On a developer's computer this is usually the PostgreSQL connection of a Server built from source, which reads the same `~/.aops/aops.server.env`. Rename the file (for example to `aops.server.env.dev`) and run the setup again; put it back after you remove the app. On a Mac the setup's alert may show only the exit code.
 - An interrupted operation: inspect `aops-server operation-status` and `aops-server lock-status` before `reconcile-operation` or `recover-lock`.
 
 Read the full diagnostic with `--json`: `code`, `summary`, `details` and `nextActions`. Never reset a database to clear an error.
