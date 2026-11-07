@@ -1,14 +1,21 @@
 # aops
 
-Start at **[aopslabs.com](https://aopslabs.com)** to download AOPS and see how it helps.
+The all-in-one agentic development tool. Memory, plans, documents, reviews and chat in one place, so your agents pick up where they left off.
 
-aops gives your AI agents shared project memory, plans, and versioned documents, so they can pick up where you left off.
+**[Download aops at aopslabs.com](https://aopslabs.com)** for Windows, Mac (Apple silicon) or Linux.
 
-This repository holds the public aops **skills, user guides, working disciplines, and roles** in [`assets/`](assets/). AOPS installs them for Codex and Claude; you do not need to clone this repository.
+- Free forever, even for paid work. No account and no API key.
+- Runs on your computer, and your projects stay there.
+- Sets itself up for Codex and Claude. Any other agent or harness that can run a command can use aops too.
+- Team and server editions are coming soon.
+
+## What is in this repository
+
+The program is free to use but not open source. This repository holds the public aops **skills, user guides, working disciplines and roles** in [`assets/`](assets/). The installer brings them with it, so you do not need to clone this repository. You may change the skills and create your own.
 
 ## Get newer skills
 
-AOPS installs the skills that come with it. Newer skills are published here as `assets-<version>` releases. The Skills row of the AOPS window checks for them, or run:
+aops installs the skills that come with it. Newer skills are published here as `assets-<version>` releases. The Skills row of the aops window checks for them, or run:
 
 ```sh
 aops assets status --check-latest
@@ -17,20 +24,27 @@ aops assets update
 
 ## Use it in your project
 
-Open your repository in your agent and try one of these prompts. Replace `your-project-slug` with your project name, such as `my-app`.
+Open your repository in your agent and try these prompts. Replace `slug:my-app` with your project's short name.
 
-| What you need | A simple prompt |
+| What you need | Prompt |
 | --- | --- |
-| Start a session | “aops-interactive: set up this repository with aops and ask me how we will work.” |
-| Initialize your project | “aops init slug:your-project-slug, initialize this repository and create or link its project on the aops server.” |
-| Save your progress | “aops mem slug:your-project-slug, create a checkpoint for this work.” |
-| Continue later | “aops mem slug:your-project-slug, resume where we left off.” |
-| Plan the work | “aops pm slug:your-project-slug, use a sprint for this task.” |
-| Create a document | “aops doc slug:your-project-slug, create a document for this project.” |
-| Find your documents | “aops doc slug:your-project-slug, list the documents in the architecture group.” |
-| Record a problem | “aops pm slug:your-project-slug, create an issue for the problem we just encountered.” |
-| Discuss a decision | “aops discuss slug:your-project-slug, open a Claude session in tmux and lead an independent discussion with it about SQLite or PostgreSQL for this project, following the aops-cli-discuss skill.” |
-| Work with a reviewer | “Use aops-collaborative-work for slug:your-project-slug, with Codex as implementer and Claude as reviewer.” |
-| Leave a review for later | “aops pm slug:your-project-slug, create a review request for another agent to review this work later.” |
+| Create the project | “Use aops init to set up this repository as slug:my-app and create or link its project on the aops server.” |
+| Learn how to work with aops | “How do I use aops with you on this project?” |
+| Get a brief | “Use aops mem to brief me on where slug:my-app stands.” |
+| Write a checkpoint | “Use aops mem to write a checkpoint for slug:my-app with what was checked and the next step.” |
+| Resume work | “Use aops mem to resume this task in slug:my-app from the latest checkpoint.” |
+| Plan a task | “Use aops pm to turn this task into a sprint plan for slug:my-app, with phases and small steps.” |
+| Work with a reviewer | “Use the aops collaborative work discipline. You are the implementer and driver; the other agent is the reviewer. Task: <describe the task here>.” |
+| Leave a review for later | “Use aops pm to open a review request in slug:my-app so another agent can review this work later.” |
+| Record a decision | “Use aops doc to record this decision in the slug:my-app decision log.” |
+| Discuss a decision | “aops discuss slug:my-app, open a Claude session in tmux and lead an independent discussion with it about SQLite or PostgreSQL for this project, following the aops-cli-discuss skill.” |
 
-Start with one capability. Add a working discipline when you want a repeatable solo or collaborative workflow. Explore the [public assets](assets/) or visit [aopslabs.com](https://aopslabs.com) for more.
+More prompts, using aops from another computer over SSH, and uninstalling are in the [guide](https://aopslabs.com/docs).
+
+## Questions and bugs
+
+Open an issue in [this repository](https://github.com/eeemzs/aops/issues). News is on [X](https://x.com/eeemzs).
+
+## License
+
+The free edition, including the skills and guides in this repository, comes under the [aops Free Edition License](https://aopslabs.com/license): free for any purpose, including commercial work. You may change the skills and create your own.
