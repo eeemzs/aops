@@ -1,9 +1,9 @@
 ---
 name: aops
-version: 16
+version: 17
 description: "AOPS skill index: which AOPS skill to load for aops pm (project management), aops mem (memory), aops doc (documents), aops chat (coordination), aops discuss (decisions), working disciplines, read-only views and plain-language status briefs. Start new work with aops-interactive. Triggers: 'aops', 'which aops skill', 'aops pm', 'aops mem', 'aops doc', 'aops chat', 'aops discuss'."
 metadata:
-  supersedes: "v15"
+  supersedes: "v16"
 ---
 
 # AOPS skill index
@@ -17,7 +17,7 @@ This skill is a **thin index**. It names the skill that carries the workflow; lo
 
 ## Starting work
 
-When a user starts a task with AOPS, says only "use AOPS", or does not know AOPS yet, load **`aops-interactive`**. It runs a short kickoff interview (project, aops pm, aops mem and aops doc defaults, working alone or with a second agent, review requests, discuss topics) and then continues with the skills below. When the request already answers those questions, go straight to the matching skill.
+When a user starts a task with AOPS, says only "use AOPS", or does not know AOPS yet, load **`aops-interactive`**. It runs a short kickoff interview (project, aops pm, aops mem and aops doc defaults, working alone or with a second agent, review requests, discuss topics) and then continues with the skills below. When the request already answers those questions, go straight to the matching skill. When the user has a working discipline of their own, it decides the rhythm; `aops-working-disciplines` says how to follow it, or write one.
 
 ## Which skill for what
 

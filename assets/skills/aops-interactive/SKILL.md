@@ -1,9 +1,9 @@
 ---
 name: aops-interactive
-version: 6
+version: 7
 description: "Start AOPS work with a short kickoff interview: link or create the AOPS project, confirm the aops pm, aops mem and aops doc defaults, choose working alone or with a second agent (tmux or an aops chat room), and decide on review requests and discuss topics; then continue with the matching AOPS skill. Use when a user starts a task with AOPS, asks how to use AOPS, or does not know AOPS yet."
 metadata:
-  supersedes: "v5"
+  supersedes: "v6"
   short-description: "AOPS kickoff interview and router"
   tags:
     - aops
@@ -68,7 +68,9 @@ AOPS keeps the work in three places by default. Say what each one does in one se
 
 ## 5. Working mode
 
-Ask: "Shall I work alone, or with a second agent?" Default: alone.
+**The user's own working discipline first.** When the user's request or the repository rules name one, or an installed skill says it is the user's working discipline for this work, follow it (`aops-working-disciplines`, "The user's own working discipline"). When it is unclear, or several could apply, ask once which one. From the rest of this step and step 6, ask only what it leaves open.
+
+Otherwise ask: "Shall I work alone, or with a second agent?" Default: alone.
 
 - **Alone:** the working discipline is solo-pm-loop (`aops-working-disciplines`).
   - When aops pm is on, ask: "Shall I leave a review request after each finished piece, so another agent can check it later?" Default: yes.
@@ -90,6 +92,7 @@ A discuss topic needs two real, independent agents. When step 5 chose alone, yes
 Summarize the setup in one short paragraph:
 - the project;
 - what goes to aops pm, aops mem and aops doc;
+- the working discipline and where it came from (your request, the repository rules, your own skill, or the default);
 - alone, or with whom and where, with the roles;
 - whether review requests and discuss topics are used.
 

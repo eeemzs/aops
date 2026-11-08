@@ -1,9 +1,9 @@
 ---
 name: aops-working-disciplines
-version: 10
-description: "Choose and apply an AOPS working discipline: solo-pm-loop for one agent (aops pm, aops mem and aops doc, optional review requests for later), build-review-chat for an implementer with a reviewer, design-first-consensus for decisions settled in aops discuss before building, coordinator-loop for one agent directing several. Covers the solo work rhythm, verify-first stances, consensus-to-plan binding and the closeout checklist."
+version: 11
+description: "Choose and apply an AOPS working discipline: solo-pm-loop for one agent (aops pm, aops mem and aops doc, optional review requests for later), build-review-chat for an implementer with a reviewer, design-first-consensus for decisions settled in aops discuss before building, coordinator-loop for one agent directing several. The user's own working discipline comes first; this skill says how to follow one without mixing, and how to write one for the user. Covers the solo work rhythm, verify-first stances, consensus-to-plan binding and the closeout checklist."
 metadata:
-  supersedes: "v9"
+  supersedes: "v10"
   short-description: "AOPS working disciplines and the solo work rhythm"
   tags:
     - aops
@@ -28,6 +28,20 @@ A working discipline is the rhythm of a session: who builds, who reviews, and wh
 | `coordinator-loop` | the user delegates the session to one agent that directs implementers | the coordinator reviews every slice |
 
 Paired and multi-agent setup (tmux, chat room, waking the reviewer) lives in `aops-collaborative-work`. `aops start --discipline <id>` can record the discipline in a PM-backed kickoff; it is optional.
+
+## The user's own working discipline
+
+A user may have a working discipline of their own: an ordinary skill they wrote, whose description says it is their working discipline. It comes before the AOPS disciplines.
+
+- **Which one.** Follow the discipline that the user's request or the repository rules (`AGENTS.md`, `CLAUDE.md`) name. When neither names one, follow an installed one whose description says it applies to this work, and say so. When it is unclear, or several could apply, ask the user once which one to follow.
+- **No mixing.** While you follow it, do not also apply an AOPS discipline: its rules decide plans, reviews, checkpoints and discuss topics. The AOPS skills still give the commands it asks for. Ask once about what it leaves open.
+- **Limits.** Repository rules and the user's own approvals (commit, push, publish) still hold. `aops start` composes only the four AOPS disciplines; while you follow the user's discipline, do not run it.
+
+When the user asks you to write one for them:
+1. Write `<name>/SKILL.md`: a `name`, a `description` that says it is the user's working discipline and when it applies, and short numbered rules in the user's words. The name does not start with `aops`; AOPS updates leave such skills alone.
+2. Put the folder where the user's agents read skills: `~/.claude/skills/<name>/` for Claude and `~/.codex/skills/<name>/` for Codex.
+3. For one repository, add a line to its `AGENTS.md` or `CLAUDE.md`, outside any block AOPS manages: `Working discipline: <name>`.
+4. Tell the user to start a new agent session, so that it loads the skill.
 
 ## solo-pm-loop: the solo rhythm
 

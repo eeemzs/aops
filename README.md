@@ -22,6 +22,8 @@ aops assets status --check-latest
 aops assets update
 ```
 
+An update leaves a skill you changed as it is and tells you which one; the other skills are updated.
+
 ## Use it in your project
 
 Open your repository in your agent and try these prompts. Replace `slug:my-app` with your project's short name.
@@ -35,6 +37,7 @@ Open your repository in your agent and try these prompts. Replace `slug:my-app` 
 | Resume work | “Use aops mem to resume this task in slug:my-app from the latest checkpoint.” |
 | Plan a task | “Use aops pm to turn this task into a sprint plan for slug:my-app, with phases and small steps.” |
 | Work with a reviewer | “Use the aops collaborative work discipline. You are the implementer and driver; the other agent is the reviewer. Task: <describe the task here>.” |
+| Write your own working discipline | “Write my own working discipline as a skill named my-way: <your rules>. Install it for Codex and Claude, and name it in this repository's AGENTS.md.” |
 | Leave a review for later | “Use aops pm to open a review request in slug:my-app so another agent can review this work later.” |
 | Record a decision | “Use aops doc to record this decision in the slug:my-app decision log.” |
 | Discuss a decision | “aops discuss slug:my-app, open a Claude session in tmux and lead an independent discussion with it about SQLite or PostgreSQL for this project, following the aops-cli-discuss skill.” |

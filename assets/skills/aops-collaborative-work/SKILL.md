@@ -1,9 +1,9 @@
 ---
 name: aops-collaborative-work
-version: 16
+version: 17
 description: "Work on an AOPS project with a second agent, or more: a reviewer or peer in a tmux session or an aops chat room, a review for every slice (a PM review request when aops pm is on), and aops discuss topics for important decisions. Use when the kickoff (aops-interactive) chose a second agent or a discuss topic, or when the user asks for a reviewer, a peer or a room."
 metadata:
-  supersedes: "v15"
+  supersedes: "v16"
   short-description: "Paired and multi-agent AOPS work: tmux or chat room, PM reviews, discuss"
   tags:
     - aops
@@ -23,7 +23,7 @@ One agent builds and another reviews, or several agents coordinate. AOPS keeps t
 - aops mem holds checkpoints;
 - the tmux session or the chat room only carries the conversation.
 
-Working alone follows `aops-working-disciplines` (solo-pm-loop) instead. When `--help`, a tool schema or a user guide disagrees with this skill, they win.
+Working alone follows `aops-working-disciplines` (solo-pm-loop) instead. When the user follows their own working discipline (`aops-working-disciplines`, "The user's own working discipline"), its rules decide reviews and decisions; use this skill only for the setup and mechanics it asks for. When `--help`, a tool schema or a user guide disagrees with this skill, they win.
 
 ## 1. Set up the pair
 
