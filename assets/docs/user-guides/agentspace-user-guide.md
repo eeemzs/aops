@@ -1,6 +1,6 @@
 # Agentspace User Guide
 
-_Release Notes:_ Covers what the installed AOPS ships; examples use <slug> for your project slug.
+_Release Notes:_ 2.2 describes memory-item.stats-summary, the read behind the Dashboard's Statistics tab (TASK-82).
 
 ## 1 Ownership model
 
@@ -48,6 +48,14 @@ aops mem get --id <memory-id> --json
 Do not preload all memory, skill bodies, activity payloads, or discussion
 history. Prefer summary reads and small limits. Use nested `--help` when flags
 or safety semantics matter.
+
+### 2.2 How much knowledge moved in a time window
+
+How much knowledge moved in a time window is the read `agentspace.memory-item.stats-summary`. It counts one project in `[from, to)` and in a window to compare it with: with `previous: true` the window of the same length before it, or with `previousFrom` (an instant before `from`) the window of the same length that starts there, cut where the window starts, such as the same days and hours a week earlier. It counts memory notes written (by kind too) and Discuss topics opened and concluded (a topic whose status is concluded, at its last change). It also gives a series by bucket (`hour`, `day`, `week` or `month`; by default from the window's span) in an IANA zone (`tz`, UTC when it is not one), the first record's time, and the time the project's knowledge last changed (a memory, a topic, a turn or an output). Without `from` it counts all time; `to` defaults to now. It reads dates, kinds and statuses only, never a note's text. The AOPS dashboard reads it through `/api/web/stats`.
+
+```bash
+aops agent invoke --tool agentspace.memory-item.stats-summary --project-id <project-id> --input '{"from":"2026-11-16T21:00:00Z","previousFrom":"2026-11-09T21:00:00Z","tz":"Europe/Istanbul"}'
+```
 
 ## 3 Durable memory
 

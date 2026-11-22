@@ -1,106 +1,88 @@
 ---
 name: aops-collaborative-work
-version: 17
-description: "Work on an AOPS project with a second agent, or more: a reviewer or peer in a tmux session or an aops chat room, a review for every slice (a PM review request when aops pm is on), and aops discuss topics for important decisions. Use when the kickoff (aops-interactive) chose a second agent or a discuss topic, or when the user asks for a reviewer, a peer or a room."
+version: 18
+description: "Work on an AOPS project with other agents: roles the user gives and may change, aops discuss topics for important decisions, an aops pm plan that another agent reviews, a review request for every slice, and coordination in an aops chat room, tmux or another session the user opened. Use when the user asks for a reviewer, a peer, a plan review, a discuss topic or a room, or when the kickoff (aops-interactive) chose other agents. Triggers: 'aops collab'."
 metadata:
-  supersedes: "v16"
-  short-description: "Paired and multi-agent AOPS work: tmux or chat room, PM reviews, discuss"
+  supersedes: "v17"
+  short-description: "AOPS work with other agents: roles, discuss, plan review, reviewed slices"
   tags:
     - aops
     - collaboration
     - multi-agent
     - review
-    - tmux
-    - chat
     - discuss
+    - chat
+    - tmux
 ---
 
 # AOPS Collaborative Work
 
-One agent builds and another reviews, or several agents coordinate. AOPS keeps the record of what the kickoff turned on:
-- aops pm holds the task, the plan, the review requests and their results;
+Several agents work on one task: they decide, plan, build and review in the roles the user gives. AOPS keeps the record:
 - aops discuss holds decisions;
-- aops mem holds checkpoints;
-- the tmux session or the chat room only carries the conversation.
+- aops pm holds the plan, the review requests and their results;
+- aops mem holds checkpoints and handoff notes;
+- a chat room, tmux or another session carries only coordination and wake-ups.
 
-Working alone follows `aops-working-disciplines` (solo-pm-loop) instead. When the user follows their own working discipline (`aops-working-disciplines`, "The user's own working discipline"), its rules decide reviews and decisions; use this skill only for the setup and mechanics it asks for. When `--help`, a tool schema or a user guide disagrees with this skill, they win.
+When `--help`, a tool schema or a user guide disagrees with this skill, they win.
 
-## 1. Set up the pair
+## Roles
 
-1. **Roles:** use the roles the user gave or confirmed at kickoff. Otherwise ask the user; suggest that you build (implementer) and the other agent reviews (reviewer). Never derive a role from an agent's name or brand.
-2. **Where the other agent works:**
-   - **tmux**, for one more agent on this computer:
-     - Check that `tmux` and the other agent's command are available, and that no session with the chosen name already runs.
-     - Start a persistent, interactive session, not a one-shot run.
-     - Give the agent a short brief file: the project, the task, its role, the PM ids, and how you will signal it.
-     - After each message, confirm that the pane shows the agent working.
-   - **aops chat room**, for several agents, other computers, or a person following along:
-     - Use the user's room code. Or, when the user agrees, create a room with `aops-cli-chat`.
-     - Each agent joins with its own saved session. Bind the discuss topic to the room, and with aops pm on also the PM task and the review requests.
-3. **Readiness:** rely on the other agent only after it answered: it acknowledged in the room, or its tmux pane replied.
+- The user gives the roles, at the time. Driver, planner, implementer, reviewer and coordinator are plain words with no files behind them: the driver runs a discuss topic and writes its consensus, the planner writes the plan, the implementer builds, the reviewer checks plans and slices, and a coordinator directs other agents and speaks for them to the user.
+- Roles may change as the work moves on; follow the latest the user gave. One agent may hold several roles, and several agents may share one.
+- When the user leaves the choice to the agents ("one of you reviews"), they settle it among themselves: the agent that builds a slice does not review it, and they tell the user who took which role. When a role the work needs was not given at all, ask the user once. Never derive a role from an agent's name or brand.
+- Other questions go first to the references and the other agents, or to a discuss topic. A decision only the user can make waits for the user (as aops pm feedback when aops pm is on) while other work goes on.
 
-## 2. Work in reviewed slices
+## Where the agents meet
 
-The kickoff chose whether aops pm and checkpoint notes are on; follow those answers. Repository rules come first.
+- **aops chat room**, for several agents, other computers, or a person following along: use the user's room code. The user can also create a room in the Cockpit under Chat, or you create one with the user's yes (`aops-cli-chat`). Each agent joins with its own saved session; bind the discuss topic, the task and the review requests to the room.
+- **tmux**, for an agent on this computer: check that tmux and the agent's command are available, and that no session with that name runs. With the user's yes, start a persistent, interactive session, not a one-shot run. Give it a short brief file (the project, the task, its role, the record ids, how you will wake it), and after each message confirm that the pane shows it working.
+- **Another session** the user opened, or one you start with the user's yes (a desktop app, an IDE): it reads the same records. Wake it the way the user set up, or ask the user to pass the message on.
 
-With aops pm on, review requests and their results are the review record. When the user chose to work without aops pm, tell them that reviews then stay in the conversation (the tmux session or the room) with no record. Ask once whether to turn aops pm on for reviews; do not turn it on yourself.
+Rely on another agent only after it answered. Chat and tmux only coordinate and wake: decisions stay in aops discuss, plans and reviews in aops pm.
 
-1. With aops pm on, the task exists in aops pm before implementation. Multi-step work also has a plan (`aops-cli-projectman`).
-2. For each slice:
-   1. Implement it and validate it honestly.
-   2. With checkpoint notes on, write a checkpoint (`aops-cli-agentspace`).
-   3. With aops pm on, open a review request:
+## Decide: aops discuss
 
-      ```bash
-      aops pm review-request create --task <task-id> --sprint <sprint-id> \
-        --review-scope "sprint-phase:<sprint-id>/<phase-id>" --target-agent <reviewer> \
-        --title "<slice>" --apply --json
-      ```
+An important decision that is costly to reverse, or one the user asks to discuss, goes to an aops discuss topic before anything is built. The driver opens it with the other agents; each researches on its own before its first turn. The turn rules (at least four turns, a final stance from each agent, conclude) are in `aops-cli-discuss`. At least two real, independent agents take part; one agent writing under two names is not a consensus. Where the repository requires the user's approval of a consensus, the work waits for it.
 
-3. Wake the reviewer where it works. Name the review request id when aops pm is on; otherwise name the slice, its files and its evidence:
-   - in tmux, a one-line message;
-   - in a room, `REVIEW READY: RR=<id> | slice=<name>; scope=<phase or files>; evidence=<tests or refs>`.
-4. The reviewer gives one outcome: approved, changes_requested, commented or blocked.
-   - With aops pm on, the reviewer records it on the review request. Material findings become issues linked to it (`aops pm issue create --source review --review-request <id> ...`), and fixes go into a child review request (`--parent <id>`).
-   - With aops pm off, the reviewer answers in the tmux session or the room with the outcome and each finding's severity and evidence. You keep the list of open findings in the conversation, and in the checkpoint when checkpoint notes are on. Fixes come back as a new slice for review in the same place.
-5. With aops pm on, a room message or a tmux reply is never the review record. Read the result on the review request.
+## Plan: aops pm
 
-## 3. Decide before you build
+The planner writes the plan in aops pm from the consensus, or from the request when there was no topic: a task, and for several steps a plan with phases and small steps, each saying what, why and when it is done (`aops-cli-projectman`). Another agent reviews the plan through a review request; building starts when the review is accepted.
 
-For an important decision that is costly to reverse, run an aops discuss topic with the other agent (`aops-cli-discuss`):
-1. Each agent researches independently.
-2. At least four substantive turns follow.
-3. Each agent files a final stance.
-4. You conclude and write the consensus.
+## Build and review in slices
 
-Then write the plan from the consensus: in aops pm when it is on, otherwise in the conversation. Ask the reviewer to review the plan. Where the repository requires the user's approval of a consensus, implementation waits for it.
+1. The implementer builds one slice, validates it, writes a checkpoint when checkpoint notes are on, and opens a review request for each reviewer. Scope it to its phase (`sprint-phase:<phase-id>/<phase-label>`, the phase id from the plan) or to the whole plan (`sprint:<sprint-id>`):
 
-Two real, independent agents take part. One agent writing under two names is not a consensus.
+   ```bash
+   aops pm review-request create --task <task-id> --sprint <sprint-id> \
+     --review-scope "sprint-phase:<phase-id>/<phase-label>" --target-agent <reviewer> \
+     --title "<slice>" --apply --json
+   ```
 
-## 4. Chat room protocol
+2. Wake each reviewer where it works, with the review request id (`REVIEW READY` below).
+3. The reviewer records one outcome on the review request: approved, changes_requested, commented or blocked. Material findings become issues linked to it (`aops pm issue create --source review --review-request <id> ...`); fixes come back in a child review request (`--parent <id>`).
+4. The implementer never approves its own slice. The reviewer looks at the code and at evidence it ran itself, not at status text, and writes the result under its own identity.
+5. The reviewer keeps a bounded slice bounded: what lies outside it becomes an issue or feedback, not a hardening program.
+6. A room message or a tmux reply is never the review record; read the result on the review request. Report only validation you ran in this session. An accepted review is no permission to commit, push or publish: those follow the repository's and the user's rules (`aops`, Core rules).
 
-Room messages stay short and scannable:
+## Coordination lines
+
+Messages in a room, a tmux pane or another session stay short:
 
 ```text
-TASK <n>: <scope>                                # user
-ACK <n>: <goal, acceptance, validation plan>     # implementer
-DONE <n>: <summary, files, evidence>             # implementer
-VERIFIED <n>: <evidence> | REWORK <n>: <issue>   # reviewer, mirroring the review result
+TASK <n>: <scope>                                     # user or coordinator
+ACK <n>: <goal, acceptance, validation plan>          # the agent taking it
+TURN: topic=<slug>; next=<agent>                      # a discuss turn was written
+PLAN READY: RR=<id> | plan=<sprint>; phases=<list>    # planner
 REVIEW READY: RR=<id> | slice=<name>; scope=<phase or files>; evidence=<refs>
+DONE <n>: <summary, files, evidence>                  # implementer
+VERIFIED <n>: <evidence> | REWORK <n>: <issue>        # reviewer, mirroring the result
 CHECKPOINT: subject=<task or sprint>; memory=<id>; next=<action>
 ```
 
-Read the room from your saved cursor (`--after-seq`), with delivered and read marks. In `listen`, exit 22 is a normal timeout. `aops-cli-chat` has the details.
+In a room, read from your saved cursor and mark messages delivered and read; in `listen`, exit 22 is a normal timeout (`aops-cli-chat`).
 
-## 5. The kickoff command
+## Without aops pm
 
-`aops start --json` composes a PM-backed kickoff for three cases: working alone, working alone with later reviews, and chat room work. It needs a board.
-- Use it when one of those fits.
-- It has no tmux mode and no setting for working without aops pm. When the user chose tmux, or chose to work without aops pm, set up with the steps above instead.
-
-## Rules
-
-1. With aops pm on, aops pm holds plans and reviews; without it, they stay in the conversation. aops discuss holds decisions; aops mem holds checkpoints. tmux and rooms carry conversation. Mirrors are read-only.
-2. Board and room closeout belong to the user.
-3. Ask the user at kickoff. Afterwards resolve questions from references, with the other agent, or in a discuss topic. Park decisions only the user can make (as PM feedback when aops pm is on, otherwise in a message to the user), and continue with other work.
-4. Report only validation you ran in this session.
+- Tell the user that plans and reviews then stay in the conversation with no record; ask once whether to turn aops pm on, and do not turn it on yourself.
+- The plan is a short list in the conversation; the reviewer answers there with the outcome and each finding's severity and evidence.
+- The implementer keeps the open findings (in a checkpoint when checkpoint notes are on); fixes come back as a new slice in the same place.

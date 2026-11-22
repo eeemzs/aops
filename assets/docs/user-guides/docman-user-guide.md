@@ -1,6 +1,6 @@
 # Docman User Guide
 
-_Release Notes:_ Covers what the installed AOPS ships; examples use <slug> for your project slug.
+_Release Notes:_ 12.4 describes the Dashboard's Activity and Statistics tabs, and 7.8 the read document.stats-summary (TASK-82).
 
 ## 1 Agent fast path
 
@@ -819,6 +819,26 @@ Note:
    monospace source with wrap/copy/download controls and does not request an
    outline.
 
+### 7.8 How much moved in a project
+
+`document.stats-summary` counts one project's documents in a time window
+`[from, to)` and in a window to compare it with: with `previous: true` the window
+of the same length before it, or with `previousFrom` (an instant before `from`)
+the window of the same length that starts there, cut where the window starts,
+such as the same days and hours a week earlier. It counts documents created (by
+their creation time) and document versions published (by their publish time).
+It also gives the documents the project holds now, a
+series by bucket (`hour`, `day`, `week` or `month`; by default from the
+window's span) in an IANA zone (`tz`, UTC when it is not one), the first
+record's time, and the project's last change (a document, a version, a page, a
+page version, a section or a link). Without `from` it counts all time; `to`
+defaults to now. The reads are narrow: dates only, never a body. The AOPS
+dashboard reads it through `/api/web/stats`.
+
+```bash
+aops-cli agent invoke --tool docman.document.stats-summary --project-id <project-id> --input '{"from":"2026-11-16T21:00:00Z","previousFrom":"2026-11-09T21:00:00Z","tz":"Europe/Istanbul"}'
+```
+
 ## 8 Relationship with Memory and PM
 
 ### 8.1 Overview
@@ -1029,10 +1049,14 @@ If the draft was removed or replaced, close the dialog and refresh the document 
 
 Closing a dialog, refreshing a list or selecting a group never publishes a document. Ask your agent to complete and publish the document when it is ready.
 
-### 12.4 Find recent documents from Dashboard
+### 12.4 Dashboard activity and statistics
 
-Open Dashboard at /ui to see the latest record changes grouped by project. Documents appear alongside memory and planning records; selecting a document opens that exact document in Docs. Use Refresh after an agent creates or edits a record.
+Dashboard at /ui shows what changed in your projects. It only reads: opening it, choosing filters or refreshing never changes a record.
 
-Dashboard loads six projects at first and Load more adds six. Projects loaded X/Y describes that window; each group shows up to ten dated changes and its loaded-record count. It is a last-change overview, not a complete activity history or a search of every project. Undated records are counted separately, and a failed section is shown as unavailable rather than empty.
+The toolbar chooses the projects (all of them, your favorites, or the ones you pick) and the period: today, yesterday, 7, 30 or 60 days, all time, or a range of dates. The address keeps the choice, so a reload or a shared link opens the same view, and Reset brings a tab back to its defaults. Dashboard opens on Activity the first time; when you come back without filters in the address, this browser reopens the tab and the filters you left.
 
-Use Projects for the full project register and project-specific Boards, Sprints, Memory and Docs tabs. The Dashboard does not select a project automatically. To read every document in a project, open its Docs tab or the Docs workbench; document groups and starter drafts behave as described above.
+Activity lists every record created or edited in the period, newest first: tasks, sprints, boards, issues, feedback, reviews, memory, discussions, skills, prompts, artifacts, resources and documents. Choose the kinds, group them by day, project or kind, and read them as a list or a table. Selecting a document opens that exact document in Docs. Removals are not listed. While the period reaches now, new changes come in every 10 seconds; Load older changes reads further back in the period.
+
+Statistics counts how much moved in the period, against the same period just before it at the same hour (today against the same hours yesterday, 7 days against the 7 days before), and what is open now: tasks completed and opened, issues resolved, reviews accepted, sprints completed and notes written, with the tasks in progress and the open issues. The details of Notes written add the documents created, the versions published and the documents the projects hold now. Choose a number to see it over time. The By project table gives each project's numbers, Docs among them, and its last change. A number that could not be read shows a dash, never a 0. While the period reaches now, the numbers refresh every minute.
+
+To read every document in a project, open its Docs tab or the Docs workbench; document groups and starter drafts behave as described above.

@@ -1,6 +1,6 @@
 # AOPS CLI User Guide
 
-_Release Notes:_ TASK-81: install, update and rollback leave a skill folder that differs from every stored release as it is and name it in changedSkills; how to take AOPS's version back; your own skills.
+_Release Notes:_ Retires aops start and the working disciplines and roles (TASK-83, assets 0.5.0).
 
 ## 1 Introduction
 
@@ -1002,9 +1002,9 @@ aops assets rollback --target all --json  # the previous release; no network
 
 `install`, `update`, and `rollback` write the skills of the installed and the new release in each runtime they update, but only where a skill's folder is missing or still holds the exact files of a release kept in `~/.aops/assets`. A folder that differs from all of them, such as an AOPS skill you changed, stays as it is: the result and `aops assets status` name it in `changedSkills` (`<runtime>:<skill>`), and the Skills row of the AOPS window shows it. A skill that only an older release carried is removed only where the runtime still holds that release's exact files. Skills that no AOPS release carries remain untouched, and a failure restores the prior working files. One install, update, or rollback runs at a time, and a release that needs a newer `aops` is refused before anything changes, whatever its source. `install` and `update --from-release` also take `--expect-current <version>` (`none`: no release installed yet): when another release is installed by then, they change nothing and stop with `aops_assets_current_changed:<installed version>`. A lock left by an `aops` that no longer runs is taken over. `aops_assets_install_lock_stuck` means a lock whose owner cannot be read, or a takeover that was itself interrupted: once no `aops` command runs, remove `~/.aops/assets/install.lock` and `~/.aops/assets/install.lock.takeover`, whichever exists, and try again. After the new install succeeds, the retired `~/.aops/agent-assets` store is removed. A symlink or non-directory at that exact legacy path fails before new asset writes.
 
-To take AOPS's version of a skill you changed, move its folder out of the skills folder (a renamed copy left inside it loads as a second skill), read `storeRoot` and `current` from `aops assets status --json`, run `aops assets install --from-release "<storeRoot>/releases/<current>" --target <codex|claude|all>`, and start a new agent session. Skills of your own, such as your own working discipline, take names that do not start with `aops`; the `aops-working-disciplines` skill says how to write one.
+To take AOPS's version of a skill you changed, move its folder out of the skills folder (a renamed copy left inside it loads as a second skill), read `storeRoot` and `current` from `aops assets status --json`, run `aops assets install --from-release "<storeRoot>/releases/<current>" --target <codex|claude|all>`, and start a new agent session. Skills of your own, such as your rules for how agents work, take names that do not start with `aops`.
 
-`~/.aops/assets` stores downloaded releases, current/previous state, and backups. Public releases contain skills, user guides, working disciplines, and roles. The release contract intentionally has no gateway, pointer, receipt, signature, commit identity, or machine identity layer.
+`~/.aops/assets` stores downloaded releases, current/previous state, and backups. Public releases contain skills and user guides. The release contract intentionally has no gateway, pointer, receipt, signature, commit identity, or machine identity layer.
 
 Start a new Codex or Claude Code session after an install or update so that it loads the new skills.
 
@@ -1135,12 +1135,12 @@ Search rules:
 `aops-cli agents-md` manages generated AGENTS.md prompt-template blocks. Keep project-specific rules outside the managed block.
 
 ```bash
-aops-cli agents-md preview --collab
-aops-cli agents-md update --collab --apply
+aops-cli agents-md preview
+aops-cli agents-md update --apply
 aops-cli agents-md reset --apply --confirm
 ```
 
-Use this when a repo needs the standard AOPS task execution or collaborative work protocol reminders. Do not manually edit the managed block unless recovering from a broken generated state.
+Use this when a repo needs the standard AOPS starter block; `--discuss` adds the decision-ritual template. Do not manually edit the managed block unless recovering from a broken generated state.
 
 ## 34 Agent runtime prompt/skill bootstrap
 
@@ -1148,7 +1148,7 @@ Use this when a repo needs the standard AOPS task execution or collaborative wor
 
 #### 34.1.1 Overview
 
-AOPS installs its reviewed agent asset bundle (skills, user guides, working disciplines and roles) for Codex and Claude. Check it, or install it again, before asking an agent to use the AOPS skills:
+AOPS installs its reviewed agent asset bundle (skills and user guides) for Codex and Claude. Check it, or install it again, before asking an agent to use the AOPS skills:
 
 ```bash
 aops assets status --json
@@ -1159,7 +1159,7 @@ Destinations:
 
 1. Codex skills: `~/.codex/skills/<skill>/SKILL.md`
 2. Claude skills: `~/.claude/skills/<skill>/SKILL.md`
-3. Local bundle store, user guides, disciplines, and roles: `~/.aops/assets/releases/<version>/files/**`; `aops assets status --json` reports the user guides folder as `userGuidesRoot`.
+3. Local bundle store and user guides: `~/.aops/assets/releases/<version>/files/**`; `aops assets status --json` reports the user guides folder as `userGuidesRoot`.
 
 `assets install` uses the bundle shipped with AOPS; `assets update` installs a newer published release (26.1). To repair from another reviewed local bundle directory, use:
 
@@ -1169,50 +1169,19 @@ aops assets update --from-release <reviewed-local-directory> --target all --json
 
 The Skills row of the AOPS window (TUI) runs these same commands and does not own a second installer.
 
-## 35 `start` kickoff composer
+## 35 Retired `start` command
 
 ### 35.1 Overview
 
 #### 35.1.1 Overview
 
-`aops-cli start` composes the hosted "AOPS Collaborative Startup" starter
-prompt from kickoff answers. The command's live help is canonical:
+`aops start`, the kickoff composer, was retired together with the working disciplines and roles (assets 0.5.0). It changes nothing and stops with `aops_command_retired`; the error's next action says what to do instead:
 
 ```bash
-aops-cli start --help
+aops start --json   # error.code: aops_command_retired
 ```
 
-Two usage modes:
-
-1. Operator TTY: `aops-cli start` asks questions interactively and writes the
-   prompt to stdout or to a file with `--out <file>`.
-2. Agent interview: `aops-cli start --json` returns questions in
-   `result.missing` with an `askOperator` marker. The agent supplies known
-   answers as flags and asks the operator only for `askOperator` items. Roles
-   are operator-only.
-
-Default `--json` output is compact. Instead of returning the prompt body inline,
-it points to it with `result.promptRef`; `--out tmp/start.md` keeps a long prompt
-in a file. Request an inline prompt with `--full-output` only when necessary.
-
-Frequently used commands:
-
-```bash
-aops-cli start --mode solo --board <board> --task "<task>" --json --out tmp/start.md
-aops-cli start --mode chat-room --board <board> --discipline build-review-chat --json
-aops-cli start --reminder --task "<current task>" --area <area> --limit 3 --json
-```
-
-Important fields in a ready result:
-
-1. `result.promptRef.path` / `result.promptRef.sha256` - prompt file and hash.
-2. `result.memoryBrief` - read-only local-cache memory startup pack; `--no-memory-brief` skips it.
-3. `result.sessionGuidance` - layered runtime rules, discipline guardrails, accepted playbooks, ranked experience briefs.
-
-`start --reminder` is not a full kickoff: it asks no questions, does not
-serialize the full starter prompt, and writes no PM, memory, or hosted state. It
-provides a bounded read-only answer to mid-session questions such as "where
-were we, and which rules, playbooks, or experience items apply?"
+Say in the conversation how to work: alone or with other agents, with or without review requests, and whether an important decision goes to an `aops discuss` topic first. The `aops-interactive` skill asks only what is still open. The command's flags (`--mode`, `--discipline`, `--reminder`) and its `sessionGuidance` output went with it; section 37 reads playbooks and experience without it.
 
 ## 36 Implementation plan
 
@@ -1245,25 +1214,20 @@ Rules:
 
 #### 37.1.1 Overview
 
-Playbooks and experience are not bulk-loaded at startup. Read a bounded pack
-first:
+Playbooks and experience are not bulk-loaded at startup. Read a bounded set
+for the task at hand:
 
 ```bash
-aops-cli start --reminder --task "<current task>" --area <area> --limit 3 --json
+aops-cli playbook list --area <area> --limit 3 --json
+aops-cli exp search --query "<current task>" --area <area> --limit 3 --json
 aops-cli view experience --area <area>
 aops-cli skill current --id <skill-id> --summary --json
 ```
 
-Read `result.sessionGuidance` in three layers:
-
-1. L1 runtime pointers: AGENTS.md, ChatV3/channel rules, command refs.
-2. L2 discipline guardrails: id/title/phase/enforcement/evidence summary.
-3. L3 accepted playbook briefs + ranked experience briefs.
-
-The default experience limit is 3 and the hard maximum is 5. If a brief is
-irrelevant, do not read the full body. If it is relevant, use the
-skill/prompt/current summary, memory/experience detail, or document-reading
-ladder for a targeted read.
+Keep the limit small; three items are usually enough. If an item is
+irrelevant, do not read its full body. If it is relevant, use `playbook show`,
+the skill/prompt/current summary, memory/experience detail, or the
+document-reading ladder for a targeted read.
 
 ## 38 Checkpoint cadence
 
@@ -1325,7 +1289,7 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops api` | Direct domain API escape hatch (/api/{domain}/...) |
 | `aops archive` | AOPS archive bundle commands for hosted Projectman graph cleanup preparation |
 | `aops artifact` | Agentspace artifact sugar commands over the hosted AOPS gateway |
-| `aops assets` | Install, update, and roll back the AOPS skills, guides, disciplines, and roles: bundled, local, or the latest published release |
+| `aops assets` | Install, update, and roll back the AOPS skills and user guides: bundled, local, or the latest published release |
 | `aops auth` | Sign in to a south target through South |
 | `aops bootstrap` | Read the host bootstrap contract |
 | `aops chat` | ChatV3 encrypted channels, rooms, agent sessions, coordination, and foreground listening |
@@ -1350,7 +1314,6 @@ maintained manually; do not edit the marker blocks below by hand.
 | `aops resource` | Agentspace resource sugar commands over the hosted AOPS gateway |
 | `aops setup` | Connect this CLI to an AOPS Server and install the agent assets |
 | `aops skill` | Agentspace skill and skill-version sugar commands over the hosted AOPS gateway |
-| `aops start` | Compose the AOPS Collaborative Startup kickoff prompt from explicit flags |
 | `aops sync` | Server-first sync commands: refresh the read-only local cache of Projectman/Agentspace state plus hosted prompt/skill mirrors |
 | `aops target` | Manage named AOPS Server targets |
 | `aops tui` | Open the AOPS terminal UI; it installs the bundled agent assets first |

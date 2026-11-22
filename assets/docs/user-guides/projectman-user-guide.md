@@ -1,6 +1,6 @@
 # Projectman User Guide
 
-_Release Notes:_ Covers what the installed AOPS ships; examples use <slug> for your project slug.
+_Release Notes:_ 8.2 describes stats.summary, the read behind the Dashboard's Statistics tab (TASK-82).
 
 ## 1 Agent fast path
 
@@ -532,6 +532,29 @@ aops doc answer --document-version-id <docver-id> --q "How should a material rev
 
 Local mirrors may support local search, but hosted Projectman state remains the
 canonical source for planning records.
+
+### 8.2 How much moved in a time window
+
+How much moved in a time window is the read `projectman.stats.summary`. It
+counts one project in `[from, to)` and in a window to compare it with: with
+`previous: true` the window of the same length before it, or with `previousFrom`
+(an instant before `from`) the window of the same length that starts there, cut
+where the window starts, such as the same days and hours a week earlier. It
+counts tasks opened and completed (a task in a done-class
+column, at its last move into that class), issues opened and resolved, feedback
+recorded and handled, review requests opened and accepted, sprints opened and
+completed. It also gives what is open now (tasks by column class, open issues
+by severity, open feedback, waiting reviews, running sprints; boards and
+sprints that are not archived), each board's tasks with those completed in the
+window, a series by bucket (`hour`, `day`, `week` or `month`; by default from
+the window's span) in an IANA zone (`tz`, UTC when it is not one), the first
+record's time and the project's last change. Without `from` it counts all time;
+`to` defaults to now. It reads dates, statuses and links only, never bodies or
+notes. The AOPS dashboard reads it through `/api/web/stats`.
+
+```bash
+aops agent invoke --tool projectman.stats.summary --project-id <project-id> --input '{"from":"2026-11-16T21:00:00Z","previousFrom":"2026-11-09T21:00:00Z","tz":"Europe/Istanbul"}'
+```
 
 ## 9 Status audit and reconciliation
 
