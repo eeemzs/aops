@@ -1,6 +1,6 @@
 # Docman User Guide
 
-_Release Notes:_ 12.4 describes the Dashboard's Activity and Statistics tabs, and 7.8 the read document.stats-summary (TASK-82).
+_Release Notes:_ 7.8: the example names scopeId, which the route of document.stats-summary needs (TASK-82, FABLE-11).
 
 ## 1 Agent fast path
 
@@ -836,7 +836,7 @@ defaults to now. The reads are narrow: dates only, never a body. The AOPS
 dashboard reads it through `/api/web/stats`.
 
 ```bash
-aops-cli agent invoke --tool docman.document.stats-summary --project-id <project-id> --input '{"from":"2026-11-16T21:00:00Z","previousFrom":"2026-11-09T21:00:00Z","tz":"Europe/Istanbul"}'
+aops-cli agent invoke --tool docman.document.stats-summary --project-id <project-id> --input '{"scopeId":"<project-id>","from":"2026-11-16T21:00:00Z","previousFrom":"2026-11-09T21:00:00Z","tz":"Europe/Istanbul"}'
 ```
 
 ## 8 Relationship with Memory and PM
